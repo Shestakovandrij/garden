@@ -330,7 +330,7 @@ export default function Hero() {
             {/* Subtitle */}
             <p
               data-hero-subtitle
-              className="text-lg lg:text-xl text-white/75 lg:text-text-secondary leading-relaxed mb-10 max-w-lg"
+              className="text-lg lg:text-xl text-white/70 lg:text-text-secondary leading-relaxed mb-10 max-w-lg"
             >
               Zakladamy trawniki, budujemy tarasy, projektujemy ogrody. Solidna
               realizacja, konkretne terminy, jasna komunikacja.
@@ -353,7 +353,7 @@ export default function Hero() {
               <a
                 data-hero-cta
                 href="#uslugi"
-                className="inline-flex items-center gap-2.5 h-14 px-9 rounded-2xl font-semibold text-white lg:text-text bg-white/15 lg:bg-white/70 backdrop-blur-md border border-white/20 lg:border-border/50 hover:bg-white/25 lg:hover:bg-white lg:hover:shadow-lg lg:hover:shadow-primary/5 transition-all duration-300 cursor-pointer"
+                className="inline-flex items-center gap-2.5 h-14 px-9 rounded-2xl font-semibold text-white lg:text-text bg-white/15 lg:bg-white/70 backdrop-blur-md border border-white/20 lg:border-border/50 hover:bg-white/25 lg:hover:bg-white lg:hover:shadow-lg transition-all duration-300 cursor-pointer"
               >
                 Zobacz uslugi
               </a>
@@ -374,7 +374,7 @@ export default function Hero() {
                   <div className="w-8 h-8 rounded-lg bg-white/10 lg:bg-accent/10 flex items-center justify-center">
                     <item.icon size={15} className="text-accent" />
                   </div>
-                  <span className="text-sm font-medium text-white/70 lg:text-text-secondary">
+                  <span className="text-sm font-medium text-white/60 lg:text-text-secondary">
                     {item.text}
                   </span>
                 </div>

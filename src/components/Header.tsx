@@ -24,10 +24,10 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed z-50 transition-all duration-500 top-3 left-4 right-4 rounded-2xl ${
         scrolled
-          ? "top-3 left-4 right-4 rounded-2xl glass shadow-lg shadow-black/5"
-          : "bg-transparent"
+          ? "bg-white/95 backdrop-blur-md shadow-lg shadow-black/5 border border-border/30"
+          : "bg-white/90 backdrop-blur-sm shadow-md shadow-black/3 border border-border/20"
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
