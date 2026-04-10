@@ -277,17 +277,6 @@ export default function Hero() {
       ref={sectionRef}
       className="relative min-h-screen flex items-center overflow-hidden bg-[#f0f5f2]"
     >
-      {/* Mobile: full-screen background photo with overlay */}
-      <div className="absolute inset-0 lg:hidden">
-        <img
-          src={HERO_SIDE}
-          alt=""
-          aria-hidden="true"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-dark/70 via-dark/60 to-dark/80" />
-      </div>
-
       {/* Desktop: interactive cursor-reactive canvas background */}
       <div className="hidden lg:block absolute inset-0">
         <OrganicBlobs />
@@ -296,17 +285,27 @@ export default function Hero() {
       {/* Subtle top gradient (desktop only) */}
       <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#e8f0ec] to-transparent pointer-events-none hidden lg:block" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 py-32 lg:py-0 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-screen py-28">
-          {/* Left — text content */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-24 pb-16 lg:py-0 w-full">
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-16 items-center lg:min-h-screen lg:py-28">
+
+          {/* Mobile hero image — on top */}
+          <div className="lg:hidden w-full rounded-2xl overflow-hidden shadow-xl shadow-primary/10 border border-border/30">
+            <img
+              src={HERO_SIDE}
+              alt="Nowoczesny dom z zadbanym ogrodem i trawnikiem"
+              className="w-full h-[240px] sm:h-[300px] object-cover"
+            />
+          </div>
+
+          {/* Text content */}
           <div>
             {/* Badge */}
             <div
               data-hero-badge
-              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/15 lg:bg-white/70 backdrop-blur-md border border-white/15 lg:border-primary/10 shadow-sm mb-8"
+              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/70 backdrop-blur-md border border-primary/10 shadow-sm mb-8"
             >
               <Sparkles size={14} className="text-accent" />
-              <span className="text-sm font-medium text-white/90 lg:text-primary">
+              <span className="text-sm font-medium text-primary">
                 Kompleksowe uslugi ogrodnicze w Polsce
               </span>
             </div>
@@ -314,7 +313,7 @@ export default function Hero() {
             {/* H1 */}
             <h1
               data-hero-title
-              className="text-4xl sm:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-bold leading-[1.06] tracking-tight text-white lg:text-dark mb-7"
+              className="text-4xl sm:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-bold leading-[1.06] tracking-tight text-dark mb-7"
               style={{ perspective: "600px" }}
             >
               <span className="hero-line block overflow-hidden">
@@ -330,7 +329,7 @@ export default function Hero() {
             {/* Subtitle */}
             <p
               data-hero-subtitle
-              className="text-lg lg:text-xl text-white/70 lg:text-text-secondary leading-relaxed mb-10 max-w-lg"
+              className="text-lg lg:text-xl text-text-secondary leading-relaxed mb-10 max-w-lg"
             >
               Zakladamy trawniki, budujemy tarasy, projektujemy ogrody. Solidna
               realizacja, konkretne terminy, jasna komunikacja.
@@ -353,14 +352,14 @@ export default function Hero() {
               <a
                 data-hero-cta
                 href="#uslugi"
-                className="inline-flex items-center gap-2.5 h-14 px-9 rounded-2xl font-semibold text-white lg:text-text bg-white/15 lg:bg-white/70 backdrop-blur-md border border-white/20 lg:border-border/50 hover:bg-white/25 lg:hover:bg-white lg:hover:shadow-lg transition-all duration-300 cursor-pointer"
+                className="inline-flex items-center gap-2.5 h-14 px-9 rounded-2xl font-semibold text-text bg-white/70 backdrop-blur-md border border-border/50 hover:bg-white hover:shadow-lg transition-all duration-300 cursor-pointer"
               >
                 Zobacz uslugi
               </a>
             </div>
 
             {/* Trust indicators */}
-            <div className="flex flex-wrap items-center gap-8">
+            <div className="flex flex-wrap items-center gap-6 lg:gap-8">
               {[
                 { icon: Shield, text: "Bezplatna wycena" },
                 { icon: Clock, text: "Odpowiedz w 24h" },
@@ -371,10 +370,10 @@ export default function Hero() {
                   data-hero-trust
                   className="flex items-center gap-2.5"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-white/10 lg:bg-accent/10 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
                     <item.icon size={15} className="text-accent" />
                   </div>
-                  <span className="text-sm font-medium text-white/60 lg:text-text-secondary">
+                  <span className="text-sm font-medium text-text-secondary">
                     {item.text}
                   </span>
                 </div>
