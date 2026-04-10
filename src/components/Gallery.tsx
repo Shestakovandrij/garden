@@ -72,8 +72,8 @@ export default function Gallery() {
 
   return (
     <>
-      <section ref={sectionRef} className="py-24 lg:py-32 bg-white relative">
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-accent/3 rounded-full blur-[120px]" />
+      <section ref={sectionRef} className="py-24 lg:py-32 bg-white relative overflow-hidden">
+        <div className="absolute bottom-0 left-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-accent/3 rounded-full blur-[120px]" />
 
         <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -87,7 +87,32 @@ export default function Gallery() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 auto-rows-[200px] md:auto-rows-[220px]">
+          {/* Mobile: simple vertical stack */}
+          <div className="flex flex-col gap-3 md:hidden">
+            {images.map((img, i) => (
+              <div
+                key={i}
+                data-gallery-item
+                onClick={() => setLightbox(i)}
+                className="relative rounded-2xl overflow-hidden group cursor-pointer h-[220px]"
+              >
+                <img
+                  src={img.src}
+                  alt={img.alt}
+                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/30 transition-colors duration-300 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-300">
+                    <ZoomIn size={20} className="text-white" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: masonry grid */}
+          <div className="hidden md:grid md:grid-cols-4 md:gap-4 md:auto-rows-[220px]">
             {images.map((img, i) => (
               <div
                 key={i}

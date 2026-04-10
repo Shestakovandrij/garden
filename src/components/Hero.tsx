@@ -369,7 +369,19 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Right — visual composition */}
+          {/* Mobile hero image */}
+          <div className="lg:hidden -mx-6 mt-2" data-hero-visual>
+            <div className="relative rounded-2xl overflow-hidden mx-6 shadow-xl shadow-primary/10 border border-white/50">
+              <img
+                src={HERO_SIDE}
+                alt="Nowoczesny dom z zadbanym ogrodem i trawnikiem"
+                className="w-full h-[280px] sm:h-[340px] object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-dark/30 via-transparent to-transparent" />
+            </div>
+          </div>
+
+          {/* Desktop — visual composition */}
           <div className="hidden lg:block" data-hero-visual>
             <div className="relative">
               {/* Main hero image */}
