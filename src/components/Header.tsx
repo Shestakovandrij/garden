@@ -149,57 +149,59 @@ export default function Header() {
   }, [animateClose]);
 
   return (
-    <header
-      className={`fixed z-50 transition-all duration-500 top-3 left-4 right-4 rounded-2xl ${
-        scrolled
-          ? "bg-white/95 backdrop-blur-md shadow-lg shadow-black/5 border border-border/30"
-          : "bg-white/90 backdrop-blur-sm shadow-md shadow-black/3 border border-border/20"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-18">
-          {/* Logo */}
-          <a href="#" className="flex items-center gap-2.5 group cursor-pointer">
-            <div className="w-9 h-9 bg-gradient-to-br from-primary to-emerald rounded-xl flex items-center justify-center shadow-md shadow-primary/20 group-hover:shadow-lg group-hover:shadow-primary/30 transition-shadow duration-300">
-              <span className="text-white font-bold text-sm">G</span>
-            </div>
-            <span className="text-lg font-semibold tracking-tight text-text">
-              GRUND<span className="text-accent">GARDEN</span>
-            </span>
-          </a>
-
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {NAV_LINKS.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="relative px-4 py-2 text-sm font-medium text-text-secondary hover:text-primary transition-colors duration-200 rounded-lg hover:bg-primary/5 cursor-pointer"
-              >
-                {link.label}
-              </a>
-            ))}
-            <a
-              href="#kontakt"
-              className="ml-3 inline-flex items-center gap-2 h-10 px-6 bg-gradient-to-r from-primary to-emerald text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
-            >
-              Wyślij zapytanie
-              <ArrowRight size={15} />
+    <>
+      <header
+        className={`fixed z-50 transition-all duration-500 top-3 left-4 right-4 rounded-2xl ${
+          scrolled
+            ? "bg-white/95 backdrop-blur-md shadow-lg shadow-black/5 border border-border/30"
+            : "bg-white/90 backdrop-blur-sm shadow-md shadow-black/3 border border-border/20"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 lg:h-18">
+            {/* Logo */}
+            <a href="#" className="flex items-center gap-2.5 group cursor-pointer">
+              <div className="w-9 h-9 bg-gradient-to-br from-primary to-emerald rounded-xl flex items-center justify-center shadow-md shadow-primary/20 group-hover:shadow-lg group-hover:shadow-primary/30 transition-shadow duration-300">
+                <span className="text-white font-bold text-sm">G</span>
+              </div>
+              <span className="text-lg font-semibold tracking-tight text-text">
+                GRUND<span className="text-accent">GARDEN</span>
+              </span>
             </a>
-          </nav>
 
-          {/* Mobile toggle */}
-          <button
-            onClick={handleOpen}
-            className="md:hidden p-2.5 text-text rounded-xl hover:bg-primary/5 transition-colors cursor-pointer"
-            aria-label="Menu"
-          >
-            <Menu size={22} />
-          </button>
+            {/* Desktop nav */}
+            <nav className="hidden md:flex items-center gap-1">
+              {NAV_LINKS.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="relative px-4 py-2 text-sm font-medium text-text-secondary hover:text-primary transition-colors duration-200 rounded-lg hover:bg-primary/5 cursor-pointer"
+                >
+                  {link.label}
+                </a>
+              ))}
+              <a
+                href="#kontakt"
+                className="ml-3 inline-flex items-center gap-2 h-10 px-6 bg-gradient-to-r from-primary to-emerald text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
+              >
+                Wyślij zapytanie
+                <ArrowRight size={15} />
+              </a>
+            </nav>
+
+            {/* Mobile toggle */}
+            <button
+              onClick={handleOpen}
+              className="md:hidden p-2.5 text-text rounded-xl hover:bg-primary/5 transition-colors cursor-pointer"
+              aria-label="Menu"
+            >
+              <Menu size={22} />
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Mobile fullscreen overlay */}
+      {/* Mobile fullscreen overlay — outside header to avoid clipping */}
       {mobileOpen && (
         <div
           ref={overlayRef}
@@ -270,6 +272,6 @@ export default function Header() {
           </div>
         </div>
       )}
-    </header>
+    </>
   );
 }
