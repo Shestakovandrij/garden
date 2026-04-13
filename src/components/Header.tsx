@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Menu, X, ArrowRight } from "lucide-react";
 import gsap from "gsap";
 
@@ -12,9 +12,8 @@ const NAV_LINKS = [
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const isOpenRef = useRef(false);
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const tlRef = useRef<gsap.core.Timeline | null>(null);
+  const [open, setOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -22,115 +21,64 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const killTimeline = useCallback(() => {
-    if (tlRef.current) {
-      tlRef.current.kill();
-      tlRef.current = null;
-    }
-  }, []);
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
-  const openMenu = useCallback(() => {
-    const overlay = overlayRef.current;
-    if (!overlay || isOpenRef.current) return;
-    isOpenRef.current = true;
-    document.body.style.overflow = "hidden";
+  // Animate inner elements when menu opens
+  useEffect(() => {
+    if (!open || !navRef.current) return;
 
-    killTimeline();
+    const links = navRef.current.querySelectorAll("[data-menu-link]");
+    const dividers = navRef.current.querySelectorAll("[data-menu-divider]");
+    const cta = navRef.current.querySelector("[data-menu-cta]");
 
-    const tl = gsap.timeline();
-    tlRef.current = tl;
-
-    tl.set(overlay, { visibility: "visible", pointerEvents: "auto" });
-    tl.fromTo(
-      overlay,
-      { xPercent: 100 },
-      { xPercent: 0, duration: 0.6, ease: "power3.inOut" }
+    gsap.fromTo(
+      links,
+      { opacity: 0, filter: "blur(12px)", y: 30 },
+      {
+        opacity: 1,
+        filter: "blur(0px)",
+        y: 0,
+        duration: 0.5,
+        ease: "power2.out",
+        stagger: 0.1,
+        delay: 0.3,
+      }
     );
 
-    // Header
-    const menuHeader = overlay.querySelector("[data-menu-header]");
-    if (menuHeader) {
-      tl.fromTo(
-        menuHeader,
-        { opacity: 0, y: -20 },
-        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
-        "-=0.2"
+    if (dividers.length) {
+      gsap.fromTo(
+        dividers,
+        { scaleX: 0 },
+        {
+          scaleX: 1,
+          duration: 0.5,
+          ease: "power2.out",
+          stagger: 0.08,
+          delay: 0.4,
+        }
       );
     }
 
-    // Links — blur in one by one
-    const linkEls = overlay.querySelectorAll("[data-menu-link]");
-    if (linkEls.length) {
-      tl.fromTo(
-        linkEls,
-        { opacity: 0, filter: "blur(12px)", y: 30 },
+    if (cta) {
+      gsap.fromTo(
+        cta,
+        { opacity: 0, filter: "blur(10px)", y: 20 },
         {
           opacity: 1,
           filter: "blur(0px)",
           y: 0,
           duration: 0.5,
           ease: "power2.out",
-          stagger: 0.1,
-        },
-        "-=0.2"
+          delay: 0.6,
+        }
       );
     }
-
-    // Dividers
-    const dividers = overlay.querySelectorAll("[data-menu-divider]");
-    if (dividers.length) {
-      tl.fromTo(
-        dividers,
-        { scaleX: 0 },
-        { scaleX: 1, duration: 0.5, ease: "power2.out", stagger: 0.08 },
-        "-=0.5"
-      );
-    }
-
-    // CTA
-    const cta = overlay.querySelector("[data-menu-cta]");
-    if (cta) {
-      tl.fromTo(
-        cta,
-        { opacity: 0, filter: "blur(10px)", y: 20 },
-        { opacity: 1, filter: "blur(0px)", y: 0, duration: 0.5, ease: "power2.out" },
-        "-=0.3"
-      );
-    }
-  }, [killTimeline]);
-
-  const closeMenu = useCallback(() => {
-    const overlay = overlayRef.current;
-    if (!overlay || !isOpenRef.current) return;
-
-    killTimeline();
-
-    const tl = gsap.timeline({
-      onComplete: () => {
-        isOpenRef.current = false;
-        document.body.style.overflow = "";
-        gsap.set(overlay, {
-          visibility: "hidden",
-          pointerEvents: "none",
-          xPercent: 100,
-        });
-      },
-    });
-    tlRef.current = tl;
-
-    tl.to(overlay, {
-      xPercent: 100,
-      duration: 0.5,
-      ease: "power3.inOut",
-    });
-  }, [killTimeline]);
-
-  useEffect(() => {
-    return () => {
-      killTimeline();
-      document.body.style.overflow = "";
-    };
-  }, [killTimeline]);
+  }, [open]);
 
   return (
     <>
@@ -172,7 +120,7 @@ export default function Header() {
             </nav>
 
             <button
-              onClick={() => openMenu()}
+              onClick={() => setOpen(true)}
               className="md:hidden p-2.5 text-text rounded-xl hover:bg-primary/5 transition-colors cursor-pointer"
               aria-label="Menu"
             >
@@ -182,20 +130,14 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Mobile fullscreen overlay */}
+      {/* Mobile fullscreen overlay — CSS transition for slide, GSAP for inner elements */}
       <div
-        ref={overlayRef}
-        className="md:hidden fixed inset-0 z-[100] bg-[#0A1F12] flex flex-col"
-        style={{
-          visibility: "hidden",
-          pointerEvents: "none",
-          transform: "translateX(100%)",
-        }}
+        className={`md:hidden fixed inset-0 z-[100] bg-[#0A1F12] flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.76,0,0.24,1)] ${
+          open ? "translate-x-0" : "translate-x-full"
+        }`}
+        aria-hidden={!open}
       >
-        <div
-          data-menu-header
-          className="px-6 pt-5 pb-4 flex items-center justify-between"
-        >
+        <div className="px-6 pt-5 pb-4 flex items-center justify-between">
           <a href="#" className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-gradient-to-br from-primary to-emerald rounded-xl flex items-center justify-center">
               <span className="text-white font-bold text-sm">G</span>
@@ -205,7 +147,7 @@ export default function Header() {
             </span>
           </a>
           <button
-            onClick={() => closeMenu()}
+            onClick={() => setOpen(false)}
             className="p-2.5 text-white/70 hover:text-white rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="Zamknij menu"
           >
@@ -213,12 +155,12 @@ export default function Header() {
           </button>
         </div>
 
-        <nav className="flex-1 flex flex-col justify-center px-8 -mt-16">
+        <nav ref={navRef} className="flex-1 flex flex-col justify-center px-8 -mt-16">
           {NAV_LINKS.map((link, i) => (
             <div key={link.href}>
               <a
                 href={link.href}
-                onClick={() => closeMenu()}
+                onClick={() => setOpen(false)}
                 data-menu-link
                 className="block text-[2.5rem] leading-tight font-bold text-white py-5 cursor-pointer hover:text-accent transition-colors duration-300"
               >
@@ -236,7 +178,7 @@ export default function Header() {
           <div data-menu-cta className="mt-10">
             <a
               href="#kontakt"
-              onClick={() => closeMenu()}
+              onClick={() => setOpen(false)}
               className="inline-flex items-center justify-center gap-3 w-full h-16 bg-gradient-to-r from-primary to-emerald text-white text-lg font-semibold rounded-2xl shadow-lg shadow-primary/30 cursor-pointer hover:shadow-xl hover:shadow-primary/40 transition-all duration-300"
             >
               Wyślij zapytanie
