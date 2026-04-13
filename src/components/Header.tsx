@@ -137,7 +137,7 @@ export default function Header() {
         }`}
         aria-hidden={!open}
       >
-        <div className="px-6 pt-5 pb-4 flex items-center justify-between">
+        <div className="relative z-10 px-6 pt-5 pb-4 flex items-center justify-between">
           <a href="#" className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-gradient-to-br from-primary to-emerald rounded-xl flex items-center justify-center">
               <span className="text-white font-bold text-sm">G</span>
