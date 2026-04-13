@@ -10,22 +10,11 @@ const NAV_LINKS = [
   { href: "#faq", label: "FAQ" },
 ];
 
-// Dynamic import of SplitText to avoid SSR issues (uses document/window at module level)
-let SplitTextClass: typeof import("gsap/SplitText").SplitText | null = null;
-const loadSplitText = async () => {
-  if (SplitTextClass) return SplitTextClass;
-  const mod = await import("gsap/SplitText");
-  SplitTextClass = mod.SplitText;
-  gsap.registerPlugin(SplitTextClass);
-  return SplitTextClass;
-};
-
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const isOpenRef = useRef(false);
   const overlayRef = useRef<HTMLDivElement>(null);
   const tlRef = useRef<gsap.core.Timeline | null>(null);
-  const splitInstances = useRef<InstanceType<typeof import("gsap/SplitText").SplitText>[]>([]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -33,21 +22,14 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Preload SplitText on mount
-  useEffect(() => {
-    loadSplitText();
-  }, []);
-
   const killTimeline = useCallback(() => {
     if (tlRef.current) {
       tlRef.current.kill();
       tlRef.current = null;
     }
-    splitInstances.current.forEach((s) => s.revert());
-    splitInstances.current = [];
   }, []);
 
-  const openMenu = useCallback(async () => {
+  const openMenu = useCallback(() => {
     const overlay = overlayRef.current;
     if (!overlay || isOpenRef.current) return;
     isOpenRef.current = true;
@@ -55,11 +37,9 @@ export default function Header() {
 
     killTimeline();
 
-    const ST = await loadSplitText();
     const tl = gsap.timeline();
     tlRef.current = tl;
 
-    // Show overlay and slide from right
     tl.set(overlay, { visibility: "visible", pointerEvents: "auto" });
     tl.fromTo(
       overlay,
@@ -67,7 +47,7 @@ export default function Header() {
       { xPercent: 0, duration: 0.6, ease: "power3.inOut" }
     );
 
-    // Header fade in
+    // Header
     const menuHeader = overlay.querySelector("[data-menu-header]");
     if (menuHeader) {
       tl.fromTo(
@@ -78,14 +58,11 @@ export default function Header() {
       );
     }
 
-    // SplitText blur animation on each link
-    const linkEls = overlay.querySelectorAll<HTMLElement>("[data-menu-link]");
-    linkEls.forEach((el) => {
-      const split = new ST(el, { type: "chars" });
-      splitInstances.current.push(split);
-
+    // Links — blur in one by one
+    const linkEls = overlay.querySelectorAll("[data-menu-link]");
+    if (linkEls.length) {
       tl.fromTo(
-        split.chars,
+        linkEls,
         { opacity: 0, filter: "blur(12px)", y: 30 },
         {
           opacity: 1,
@@ -93,11 +70,11 @@ export default function Header() {
           y: 0,
           duration: 0.5,
           ease: "power2.out",
-          stagger: 0.03,
+          stagger: 0.1,
         },
-        "-=0.35"
+        "-=0.2"
       );
-    });
+    }
 
     // Dividers
     const dividers = overlay.querySelectorAll("[data-menu-divider]");
@@ -105,8 +82,8 @@ export default function Header() {
       tl.fromTo(
         dividers,
         { scaleX: 0 },
-        { scaleX: 1, duration: 0.5, ease: "power2.out", stagger: 0.05 },
-        "-=0.6"
+        { scaleX: 1, duration: 0.5, ease: "power2.out", stagger: 0.08 },
+        "-=0.5"
       );
     }
 
@@ -116,13 +93,7 @@ export default function Header() {
       tl.fromTo(
         cta,
         { opacity: 0, filter: "blur(10px)", y: 20 },
-        {
-          opacity: 1,
-          filter: "blur(0px)",
-          y: 0,
-          duration: 0.5,
-          ease: "power2.out",
-        },
+        { opacity: 1, filter: "blur(0px)", y: 0, duration: 0.5, ease: "power2.out" },
         "-=0.3"
       );
     }
@@ -154,7 +125,6 @@ export default function Header() {
     });
   }, [killTimeline]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       killTimeline();
@@ -173,7 +143,6 @@ export default function Header() {
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-18">
-            {/* Logo */}
             <a href="#" className="flex items-center gap-2.5 group cursor-pointer">
               <div className="w-9 h-9 bg-gradient-to-br from-primary to-emerald rounded-xl flex items-center justify-center shadow-md shadow-primary/20 group-hover:shadow-lg group-hover:shadow-primary/30 transition-shadow duration-300">
                 <span className="text-white font-bold text-sm">G</span>
@@ -183,7 +152,6 @@ export default function Header() {
               </span>
             </a>
 
-            {/* Desktop nav */}
             <nav className="hidden md:flex items-center gap-1">
               {NAV_LINKS.map((link) => (
                 <a
@@ -203,7 +171,6 @@ export default function Header() {
               </a>
             </nav>
 
-            {/* Mobile burger */}
             <button
               onClick={() => openMenu()}
               className="md:hidden p-2.5 text-text rounded-xl hover:bg-primary/5 transition-colors cursor-pointer"
@@ -215,7 +182,7 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Mobile fullscreen overlay — always in DOM, hidden off-screen */}
+      {/* Mobile fullscreen overlay */}
       <div
         ref={overlayRef}
         className="md:hidden fixed inset-0 z-[100] bg-[#0A1F12] flex flex-col"
@@ -225,7 +192,6 @@ export default function Header() {
           transform: "translateX(100%)",
         }}
       >
-        {/* Menu header */}
         <div
           data-menu-header
           className="px-6 pt-5 pb-4 flex items-center justify-between"
@@ -247,7 +213,6 @@ export default function Header() {
           </button>
         </div>
 
-        {/* Nav links */}
         <nav className="flex-1 flex flex-col justify-center px-8 -mt-16">
           {NAV_LINKS.map((link, i) => (
             <div key={link.href}>
@@ -268,7 +233,6 @@ export default function Header() {
             </div>
           ))}
 
-          {/* CTA */}
           <div data-menu-cta className="mt-10">
             <a
               href="#kontakt"
@@ -281,7 +245,6 @@ export default function Header() {
           </div>
         </nav>
 
-        {/* Bottom */}
         <div className="px-8 pb-8">
           <p className="text-white/30 text-sm">
             © {new Date().getFullYear()} GrundGarden
