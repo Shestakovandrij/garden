@@ -5,7 +5,9 @@ import { Menu, X, ArrowRight } from "lucide-react";
 import gsap from "gsap";
 import { SplitText } from "gsap/SplitText";
 
-gsap.registerPlugin(SplitText);
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(SplitText);
+}
 
 const NAV_LINKS = [
   { href: "#uslugi", label: "Usługi" },
@@ -15,7 +17,7 @@ const NAV_LINKS = [
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const isOpenRef = useRef(false);
   const overlayRef = useRef<HTMLDivElement>(null);
   const tlRef = useRef<gsap.core.Timeline | null>(null);
   const splitRefs = useRef<SplitText[]>([]);
@@ -26,48 +28,44 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [mobileOpen]);
-
-  const animateOpen = useCallback(() => {
-    const overlay = overlayRef.current;
-    if (!overlay) return;
-
-    // Kill previous timeline
+  const cleanup = useCallback(() => {
     tlRef.current?.kill();
+    tlRef.current = null;
     splitRefs.current.forEach((s) => s.revert());
     splitRefs.current = [];
+  }, []);
+
+  const openMenu = useCallback(() => {
+    const overlay = overlayRef.current;
+    if (!overlay || isOpenRef.current) return;
+    isOpenRef.current = true;
+
+    document.body.style.overflow = "hidden";
+    cleanup();
 
     const tl = gsap.timeline();
     tlRef.current = tl;
 
-    // Slide overlay from right
+    // Make visible and slide in from right
+    tl.set(overlay, { visibility: "visible", pointerEvents: "auto" });
     tl.fromTo(
       overlay,
       { xPercent: 100 },
       { xPercent: 0, duration: 0.6, ease: "power3.inOut" }
     );
 
-    // Animate header inside overlay
+    // Header fade in
     const header = overlay.querySelector("[data-menu-header]");
     if (header) {
       tl.fromTo(
         header,
         { opacity: 0, y: -20 },
         { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
-        "-=0.25"
+        "-=0.2"
       );
     }
 
-    // SplitText on each nav link
+    // SplitText blur animation on each link
     const linkEls = overlay.querySelectorAll("[data-menu-link]");
     linkEls.forEach((el) => {
       const split = new SplitText(el, { type: "chars" });
@@ -84,18 +82,20 @@ export default function Header() {
           ease: "power2.out",
           stagger: 0.03,
         },
-        `-=0.35`
+        "-=0.35"
       );
     });
 
-    // Animate dividers
+    // Dividers scale in
     const dividers = overlay.querySelectorAll("[data-menu-divider]");
-    tl.fromTo(
-      dividers,
-      { scaleX: 0 },
-      { scaleX: 1, duration: 0.5, ease: "power2.out", stagger: 0.05 },
-      "-=0.6"
-    );
+    if (dividers.length) {
+      tl.fromTo(
+        dividers,
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.5, ease: "power2.out", stagger: 0.05 },
+        "-=0.6"
+      );
+    }
 
     // CTA button
     const cta = overlay.querySelector("[data-menu-cta]");
@@ -107,46 +107,41 @@ export default function Header() {
         "-=0.3"
       );
     }
-  }, []);
+  }, [cleanup]);
 
-  const animateClose = useCallback(() => {
+  const closeMenu = useCallback(() => {
     const overlay = overlayRef.current;
-    if (!overlay) return;
+    if (!overlay || !isOpenRef.current) return;
+
+    cleanup();
 
     const tl = gsap.timeline({
       onComplete: () => {
-        setMobileOpen(false);
-        splitRefs.current.forEach((s) => s.revert());
-        splitRefs.current = [];
+        isOpenRef.current = false;
+        document.body.style.overflow = "";
+        gsap.set(overlay, { visibility: "hidden", pointerEvents: "none", xPercent: 100 });
       },
     });
+    tlRef.current = tl;
 
     tl.to(overlay, {
       xPercent: 100,
       duration: 0.5,
       ease: "power3.inOut",
     });
-
-    tlRef.current = tl;
-  }, []);
-
-  const handleOpen = useCallback(() => {
-    setMobileOpen(true);
-  }, []);
-
-  // Run open animation after the overlay mounts
-  useEffect(() => {
-    if (mobileOpen && overlayRef.current) {
-      // Small delay to ensure DOM is painted
-      requestAnimationFrame(() => {
-        animateOpen();
-      });
-    }
-  }, [mobileOpen, animateOpen]);
+  }, [cleanup]);
 
   const handleLinkClick = useCallback(() => {
-    animateClose();
-  }, [animateClose]);
+    closeMenu();
+  }, [closeMenu]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanup();
+      document.body.style.overflow = "";
+    };
+  }, [cleanup]);
 
   return (
     <>
@@ -191,7 +186,7 @@ export default function Header() {
 
             {/* Mobile toggle */}
             <button
-              onClick={handleOpen}
+              onClick={openMenu}
               className="md:hidden p-2.5 text-text rounded-xl hover:bg-primary/5 transition-colors cursor-pointer"
               aria-label="Menu"
             >
@@ -201,77 +196,75 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Mobile fullscreen overlay — outside header to avoid clipping */}
-      {mobileOpen && (
+      {/* Mobile fullscreen overlay — always in DOM, hidden off-screen */}
+      <div
+        ref={overlayRef}
+        className="md:hidden fixed inset-0 z-[100] bg-[#0A1F12] flex flex-col"
+        style={{ visibility: "hidden", pointerEvents: "none", transform: "translateX(100%)" }}
+      >
+        {/* Menu header */}
         <div
-          ref={overlayRef}
-          className="md:hidden fixed inset-0 z-[100] bg-[#0A1F12] flex flex-col"
-          style={{ transform: "translateX(100%)" }}
+          data-menu-header
+          className="px-6 pt-5 pb-4 flex items-center justify-between"
         >
-          {/* Menu header */}
-          <div
-            data-menu-header
-            className="px-6 pt-5 pb-4 flex items-center justify-between"
-          >
-            <a href="#" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 bg-gradient-to-br from-primary to-emerald rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-sm">G</span>
-              </div>
-              <span className="text-lg font-semibold tracking-tight text-white">
-                GRUND<span className="text-accent">GARDEN</span>
-              </span>
-            </a>
-            <button
-              onClick={animateClose}
-              className="p-2.5 text-white/70 hover:text-white rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
-              aria-label="Zamknij menu"
-            >
-              <X size={22} />
-            </button>
-          </div>
-
-          {/* Nav links */}
-          <nav className="flex-1 flex flex-col justify-center px-8 -mt-16">
-            {NAV_LINKS.map((link, i) => (
-              <div key={link.href}>
-                <a
-                  href={link.href}
-                  onClick={handleLinkClick}
-                  data-menu-link
-                  className="block text-[2.5rem] leading-tight font-bold text-white py-5 cursor-pointer hover:text-accent transition-colors duration-300"
-                >
-                  {link.label}
-                </a>
-                {i < NAV_LINKS.length - 1 && (
-                  <div
-                    data-menu-divider
-                    className="h-px bg-white/10 origin-left"
-                  />
-                )}
-              </div>
-            ))}
-
-            {/* CTA */}
-            <div data-menu-cta className="mt-10">
-              <a
-                href="#kontakt"
-                onClick={handleLinkClick}
-                className="inline-flex items-center justify-center gap-3 w-full h-16 bg-gradient-to-r from-primary to-emerald text-white text-lg font-semibold rounded-2xl shadow-lg shadow-primary/30 cursor-pointer hover:shadow-xl hover:shadow-primary/40 transition-all duration-300"
-              >
-                Wyślij zapytanie
-                <ArrowRight size={20} />
-              </a>
+          <a href="#" className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-gradient-to-br from-primary to-emerald rounded-xl flex items-center justify-center">
+              <span className="text-white font-bold text-sm">G</span>
             </div>
-          </nav>
-
-          {/* Bottom accent */}
-          <div className="px-8 pb-8">
-            <p className="text-white/30 text-sm">
-              © {new Date().getFullYear()} GrundGarden
-            </p>
-          </div>
+            <span className="text-lg font-semibold tracking-tight text-white">
+              GRUND<span className="text-accent">GARDEN</span>
+            </span>
+          </a>
+          <button
+            onClick={closeMenu}
+            className="p-2.5 text-white/70 hover:text-white rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+            aria-label="Zamknij menu"
+          >
+            <X size={22} />
+          </button>
         </div>
-      )}
+
+        {/* Nav links */}
+        <nav className="flex-1 flex flex-col justify-center px-8 -mt-16">
+          {NAV_LINKS.map((link, i) => (
+            <div key={link.href}>
+              <a
+                href={link.href}
+                onClick={handleLinkClick}
+                data-menu-link
+                className="block text-[2.5rem] leading-tight font-bold text-white py-5 cursor-pointer hover:text-accent transition-colors duration-300"
+              >
+                {link.label}
+              </a>
+              {i < NAV_LINKS.length - 1 && (
+                <div
+                  data-menu-divider
+                  className="h-px bg-white/10 origin-left"
+                />
+              )}
+            </div>
+          ))}
+
+          {/* CTA */}
+          <div data-menu-cta className="mt-10">
+            <a
+              href="#kontakt"
+              onClick={handleLinkClick}
+              className="inline-flex items-center justify-center gap-3 w-full h-16 bg-gradient-to-r from-primary to-emerald text-white text-lg font-semibold rounded-2xl shadow-lg shadow-primary/30 cursor-pointer hover:shadow-xl hover:shadow-primary/40 transition-all duration-300"
+            >
+              Wyślij zapytanie
+              <ArrowRight size={20} />
+            </a>
+          </div>
+        </nav>
+
+        {/* Bottom */}
+        <div className="px-8 pb-8">
+          <p className="text-white/30 text-sm">
+            © {new Date().getFullYear()} GrundGarden
+          </p>
+        </div>
+      </div>
     </>
   );
 }
