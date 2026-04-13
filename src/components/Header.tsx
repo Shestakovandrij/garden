@@ -133,7 +133,7 @@ export default function Header() {
       {/* Mobile fullscreen overlay — CSS transition for slide, GSAP for inner elements */}
       <div
         className={`md:hidden fixed inset-0 z-[100] bg-[#0A1F12] flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.76,0,0.24,1)] ${
-          open ? "translate-x-0" : "translate-x-full"
+          open ? "translate-x-0 pointer-events-auto" : "translate-x-full pointer-events-none"
         }`}
         aria-hidden={!open}
       >
