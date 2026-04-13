@@ -3,11 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Menu, X, ArrowRight } from "lucide-react";
 import gsap from "gsap";
-import { SplitText } from "gsap/SplitText";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(SplitText);
-}
 
 const NAV_LINKS = [
   { href: "#uslugi", label: "Usługi" },
@@ -15,12 +10,22 @@ const NAV_LINKS = [
   { href: "#faq", label: "FAQ" },
 ];
 
+// Dynamic import of SplitText to avoid SSR issues (uses document/window at module level)
+let SplitTextClass: typeof import("gsap/SplitText").SplitText | null = null;
+const loadSplitText = async () => {
+  if (SplitTextClass) return SplitTextClass;
+  const mod = await import("gsap/SplitText");
+  SplitTextClass = mod.SplitText;
+  gsap.registerPlugin(SplitTextClass);
+  return SplitTextClass;
+};
+
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const isOpenRef = useRef(false);
   const overlayRef = useRef<HTMLDivElement>(null);
   const tlRef = useRef<gsap.core.Timeline | null>(null);
-  const splitRefs = useRef<SplitText[]>([]);
+  const splitInstances = useRef<InstanceType<typeof import("gsap/SplitText").SplitText>[]>([]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -28,25 +33,33 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const cleanup = useCallback(() => {
-    tlRef.current?.kill();
-    tlRef.current = null;
-    splitRefs.current.forEach((s) => s.revert());
-    splitRefs.current = [];
+  // Preload SplitText on mount
+  useEffect(() => {
+    loadSplitText();
   }, []);
 
-  const openMenu = useCallback(() => {
+  const killTimeline = useCallback(() => {
+    if (tlRef.current) {
+      tlRef.current.kill();
+      tlRef.current = null;
+    }
+    splitInstances.current.forEach((s) => s.revert());
+    splitInstances.current = [];
+  }, []);
+
+  const openMenu = useCallback(async () => {
     const overlay = overlayRef.current;
     if (!overlay || isOpenRef.current) return;
     isOpenRef.current = true;
-
     document.body.style.overflow = "hidden";
-    cleanup();
 
+    killTimeline();
+
+    const ST = await loadSplitText();
     const tl = gsap.timeline();
     tlRef.current = tl;
 
-    // Make visible and slide in from right
+    // Show overlay and slide from right
     tl.set(overlay, { visibility: "visible", pointerEvents: "auto" });
     tl.fromTo(
       overlay,
@@ -55,10 +68,10 @@ export default function Header() {
     );
 
     // Header fade in
-    const header = overlay.querySelector("[data-menu-header]");
-    if (header) {
+    const menuHeader = overlay.querySelector("[data-menu-header]");
+    if (menuHeader) {
       tl.fromTo(
-        header,
+        menuHeader,
         { opacity: 0, y: -20 },
         { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
         "-=0.2"
@@ -66,10 +79,10 @@ export default function Header() {
     }
 
     // SplitText blur animation on each link
-    const linkEls = overlay.querySelectorAll("[data-menu-link]");
+    const linkEls = overlay.querySelectorAll<HTMLElement>("[data-menu-link]");
     linkEls.forEach((el) => {
-      const split = new SplitText(el, { type: "chars" });
-      splitRefs.current.push(split);
+      const split = new ST(el, { type: "chars" });
+      splitInstances.current.push(split);
 
       tl.fromTo(
         split.chars,
@@ -86,7 +99,7 @@ export default function Header() {
       );
     });
 
-    // Dividers scale in
+    // Dividers
     const dividers = overlay.querySelectorAll("[data-menu-divider]");
     if (dividers.length) {
       tl.fromTo(
@@ -97,29 +110,39 @@ export default function Header() {
       );
     }
 
-    // CTA button
+    // CTA
     const cta = overlay.querySelector("[data-menu-cta]");
     if (cta) {
       tl.fromTo(
         cta,
         { opacity: 0, filter: "blur(10px)", y: 20 },
-        { opacity: 1, filter: "blur(0px)", y: 0, duration: 0.5, ease: "power2.out" },
+        {
+          opacity: 1,
+          filter: "blur(0px)",
+          y: 0,
+          duration: 0.5,
+          ease: "power2.out",
+        },
         "-=0.3"
       );
     }
-  }, [cleanup]);
+  }, [killTimeline]);
 
   const closeMenu = useCallback(() => {
     const overlay = overlayRef.current;
     if (!overlay || !isOpenRef.current) return;
 
-    cleanup();
+    killTimeline();
 
     const tl = gsap.timeline({
       onComplete: () => {
         isOpenRef.current = false;
         document.body.style.overflow = "";
-        gsap.set(overlay, { visibility: "hidden", pointerEvents: "none", xPercent: 100 });
+        gsap.set(overlay, {
+          visibility: "hidden",
+          pointerEvents: "none",
+          xPercent: 100,
+        });
       },
     });
     tlRef.current = tl;
@@ -129,19 +152,15 @@ export default function Header() {
       duration: 0.5,
       ease: "power3.inOut",
     });
-  }, [cleanup]);
-
-  const handleLinkClick = useCallback(() => {
-    closeMenu();
-  }, [closeMenu]);
+  }, [killTimeline]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      cleanup();
+      killTimeline();
       document.body.style.overflow = "";
     };
-  }, [cleanup]);
+  }, [killTimeline]);
 
   return (
     <>
@@ -184,9 +203,9 @@ export default function Header() {
               </a>
             </nav>
 
-            {/* Mobile toggle */}
+            {/* Mobile burger */}
             <button
-              onClick={openMenu}
+              onClick={() => openMenu()}
               className="md:hidden p-2.5 text-text rounded-xl hover:bg-primary/5 transition-colors cursor-pointer"
               aria-label="Menu"
             >
@@ -200,7 +219,11 @@ export default function Header() {
       <div
         ref={overlayRef}
         className="md:hidden fixed inset-0 z-[100] bg-[#0A1F12] flex flex-col"
-        style={{ visibility: "hidden", pointerEvents: "none", transform: "translateX(100%)" }}
+        style={{
+          visibility: "hidden",
+          pointerEvents: "none",
+          transform: "translateX(100%)",
+        }}
       >
         {/* Menu header */}
         <div
@@ -216,7 +239,7 @@ export default function Header() {
             </span>
           </a>
           <button
-            onClick={closeMenu}
+            onClick={() => closeMenu()}
             className="p-2.5 text-white/70 hover:text-white rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="Zamknij menu"
           >
@@ -230,7 +253,7 @@ export default function Header() {
             <div key={link.href}>
               <a
                 href={link.href}
-                onClick={handleLinkClick}
+                onClick={() => closeMenu()}
                 data-menu-link
                 className="block text-[2.5rem] leading-tight font-bold text-white py-5 cursor-pointer hover:text-accent transition-colors duration-300"
               >
@@ -249,7 +272,7 @@ export default function Header() {
           <div data-menu-cta className="mt-10">
             <a
               href="#kontakt"
-              onClick={handleLinkClick}
+              onClick={() => closeMenu()}
               className="inline-flex items-center justify-center gap-3 w-full h-16 bg-gradient-to-r from-primary to-emerald text-white text-lg font-semibold rounded-2xl shadow-lg shadow-primary/30 cursor-pointer hover:shadow-xl hover:shadow-primary/40 transition-all duration-300"
             >
               Wyślij zapytanie
