@@ -73,6 +73,8 @@ function MobileServiceCard({
   onOpen: (index: number) => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = cardRef.current;
@@ -86,6 +88,30 @@ function MobileServiceCard({
 
     return () => st.kill();
   }, [index, onOpen]);
+
+  // GSAP height animation for smooth open/close
+  useEffect(() => {
+    const content = contentRef.current;
+    const inner = innerRef.current;
+    if (!content || !inner) return;
+
+    if (isOpen) {
+      const h = inner.offsetHeight;
+      gsap.to(content, {
+        height: h,
+        opacity: 1,
+        duration: 0.5,
+        ease: "power2.out",
+      });
+    } else {
+      gsap.to(content, {
+        height: 0,
+        opacity: 0,
+        duration: 0.4,
+        ease: "power2.inOut",
+      });
+    }
+  }, [isOpen]);
 
   return (
     <div ref={cardRef} data-service-item className="border-b border-border/60">
@@ -122,13 +148,13 @@ function MobileServiceCard({
         </div>
       </button>
 
-      {/* Expandable content with image */}
+      {/* Expandable content with image — GSAP animated height */}
       <div
-        className={`overflow-hidden transition-all duration-500 ease-out ${
-          isOpen ? "max-h-[500px] opacity-100 pb-6" : "max-h-0 opacity-0 pb-0"
-        }`}
+        ref={contentRef}
+        className="overflow-hidden"
+        style={{ height: 0, opacity: 0 }}
       >
-        <div className="pl-10">
+        <div ref={innerRef} className="pl-10 pb-6">
           <p className="text-text-secondary text-sm leading-relaxed mb-4 max-w-md">
             {service.desc}
           </p>

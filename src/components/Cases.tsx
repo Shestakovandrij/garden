@@ -167,18 +167,68 @@ export default function Cases() {
           </div>
         </div>
 
-        {/* Horizontal scroll track */}
-        <div ref={containerRef} className="lg:overflow-hidden overflow-x-auto overflow-y-hidden scrollbar-none">
+        {/* Mobile: native horizontal scroll */}
+        <div
+          className="lg:hidden overflow-x-auto overflow-y-hidden -mx-6 px-6 pb-4"
+          style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
+        >
+          <div className="flex gap-5" style={{ width: "max-content" }}>
+            {cases.map((item, i) => (
+              <div
+                key={i}
+                className="group flex-shrink-0 w-[80vw] sm:w-[65vw] rounded-3xl overflow-hidden bg-white border border-border/30 shadow-lg shadow-primary/3 cursor-pointer"
+              >
+                <div className="relative aspect-[4/3] overflow-hidden">
+                  <img
+                    src={item.image}
+                    alt={item.alt}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-dark/50 via-dark/10 to-transparent" />
+                  <div className="absolute top-4 left-4">
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/90 backdrop-blur-md text-xs font-bold text-primary shadow-sm">
+                      {item.tag}
+                    </span>
+                  </div>
+                  <div className="absolute bottom-4 left-4 right-4 flex gap-2">
+                    <span className="px-3 py-1 rounded-lg bg-dark/60 backdrop-blur-sm text-white text-xs font-medium">
+                      {item.area}
+                    </span>
+                    <span className="px-3 py-1 rounded-lg bg-dark/60 backdrop-blur-sm text-white text-xs font-medium">
+                      {item.duration}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-5">
+                  <h3 className="font-bold text-text text-base mb-1.5">
+                    {item.label}
+                  </h3>
+                  <p className="text-text-muted text-sm leading-relaxed mb-3 line-clamp-2">
+                    {item.desc}
+                  </p>
+                  <div className="flex items-center gap-1.5 text-text-muted">
+                    <MapPin size={14} className="text-accent" />
+                    <span className="text-sm font-medium">{item.location}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop: GSAP horizontal scroll with pin */}
+        <div ref={containerRef} className="hidden lg:block overflow-hidden">
           <div
             ref={trackRef}
-            className="flex gap-7 pl-6 lg:pl-[max(2rem,calc((100vw-80rem)/2+2rem))]"
+            className="flex gap-7 pl-[max(2rem,calc((100vw-80rem)/2+2rem))]"
             style={{ paddingRight: "4rem" }}
           >
             {cases.map((item, i) => (
               <div
                 key={i}
                 data-case-card
-                className="group flex-shrink-0 w-[85vw] sm:w-[60vw] md:w-[45vw] lg:w-[32vw] xl:w-[28vw] rounded-3xl overflow-hidden bg-white border border-border/30 shadow-lg shadow-primary/3 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 hover:-translate-y-2 cursor-pointer"
+                className="group flex-shrink-0 w-[32vw] xl:w-[28vw] rounded-3xl overflow-hidden bg-white border border-border/30 shadow-lg shadow-primary/3 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 hover:-translate-y-2 cursor-pointer"
               >
                 {/* Image */}
                 <div className="relative aspect-[4/3] overflow-hidden">
