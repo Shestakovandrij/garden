@@ -82,7 +82,7 @@ function MobileServiceCard({
 
     const st = ScrollTrigger.create({
       trigger: el,
-      start: "top 70%",
+      start: "top 30%",
       onEnter: () => onOpen(index),
     });
 
