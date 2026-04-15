@@ -1,18 +1,22 @@
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@admin.com";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+
 async function main() {
   console.log("🌱 Seeding database...");
 
-  // Create admin user
-  const passwordHash = await bcrypt.hash("admin123", 12);
+  // Create admin user from env vars (not hardcoded)
+  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 12);
   const admin = await prisma.adminUser.upsert({
-    where: { email: "admin@admin.com" },
+    where: { email: ADMIN_EMAIL },
     update: {},
     create: {
-      email: "admin@admin.com",
+      email: ADMIN_EMAIL,
       password: passwordHash,
       name: "Admin",
       role: "admin",
@@ -160,8 +164,8 @@ async function main() {
   console.log("✅ Settings created");
 
   console.log("\n🎉 Seed complete!");
-  console.log("📧 Login: admin@admin.com");
-  console.log("🔑 Password: admin123");
+  console.log(`📧 Login: ${ADMIN_EMAIL}`);
+  console.log("🔑 Password: (from ADMIN_PASSWORD env or default)");
 }
 
 main()
