@@ -60,7 +60,7 @@ const services = [
   },
 ];
 
-/* ── Mobile service card with scroll-triggered reveal (one at a time) ── */
+/* ── Mobile service card accordion (one at a time, first open by default) ── */
 function MobileServiceCard({
   service,
   index,
@@ -75,19 +75,6 @@ function MobileServiceCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-
-    const st = ScrollTrigger.create({
-      trigger: el,
-      start: "top 30%",
-      onEnter: () => onOpen(index),
-    });
-
-    return () => st.kill();
-  }, [index, onOpen]);
 
   // GSAP height animation for smooth open/close
   useEffect(() => {
@@ -152,7 +139,7 @@ function MobileServiceCard({
       <div
         ref={contentRef}
         className="overflow-hidden"
-        style={{ height: 0, opacity: 0 }}
+        style={{ height: isOpen ? "auto" : 0, opacity: isOpen ? 1 : 0 }}
       >
         <div ref={innerRef} className="pl-10 pb-6">
           <p className="text-text-secondary text-sm leading-relaxed mb-4 max-w-md">
@@ -182,7 +169,7 @@ export default function Services() {
   const sectionRef = useRef<HTMLElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [mobileOpenIndex, setMobileOpenIndex] = useState<number | null>(null);
+  const [mobileOpenIndex, setMobileOpenIndex] = useState<number | null>(0);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   const handleMobileOpen = useCallback((index: number) => {
     setMobileOpenIndex((prev) => (prev === index ? null : index));
