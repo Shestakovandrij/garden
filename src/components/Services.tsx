@@ -60,16 +60,19 @@ const services = [
   },
 ];
 
-/* ── Mobile service card with scroll-triggered reveal ── */
+/* ── Mobile service card with scroll-triggered reveal (one at a time) ── */
 function MobileServiceCard({
   service,
   index,
+  isOpen,
+  onOpen,
 }: {
   service: (typeof services)[0];
   index: number;
+  isOpen: boolean;
+  onOpen: (index: number) => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const el = cardRef.current;
@@ -78,16 +81,16 @@ function MobileServiceCard({
     const st = ScrollTrigger.create({
       trigger: el,
       start: "top 70%",
-      onEnter: () => setIsOpen(true),
+      onEnter: () => onOpen(index),
     });
 
     return () => st.kill();
-  }, []);
+  }, [index, onOpen]);
 
   return (
     <div ref={cardRef} data-service-item className="border-b border-border/60">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => onOpen(index)}
         className={`w-full text-left py-5 flex items-start gap-4 group transition-all duration-300 cursor-pointer ${
           isOpen ? "opacity-100" : "opacity-60"
         }`}
@@ -131,7 +134,7 @@ function MobileServiceCard({
           </p>
           <div className="rounded-2xl overflow-hidden aspect-[16/10] relative">
             <img
-              src={service.image}
+              src={service.image.replace("w=800", "w=600").replace("q=80", "q=70")}
               alt={service.alt}
               className="w-full h-full object-cover"
               loading="lazy"
@@ -153,7 +156,11 @@ export default function Services() {
   const sectionRef = useRef<HTMLElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [mobileOpenIndex, setMobileOpenIndex] = useState<number | null>(null);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
+  const handleMobileOpen = useCallback((index: number) => {
+    setMobileOpenIndex((prev) => (prev === index ? null : index));
+  }, []);
 
   /* Scroll-triggered entrance */
   useEffect(() => {
@@ -297,7 +304,7 @@ export default function Services() {
         {/* ── Mobile: accordion cards with scroll trigger ── */}
         <div className="lg:hidden">
           {services.map((service, i) => (
-            <MobileServiceCard key={i} service={service} index={i} />
+            <MobileServiceCard key={i} service={service} index={i} isOpen={mobileOpenIndex === i} onOpen={handleMobileOpen} />
           ))}
         </div>
 

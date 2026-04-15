@@ -7,12 +7,18 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const HERO_IMAGES = [
+const HERO_IMAGES_DESKTOP = [
   "https://images.pexels.com/photos/7598364/pexels-photo-7598364.jpeg?auto=compress&cs=tinysrgb&w=800&q=80",
   "https://images.pexels.com/photos/1301856/pexels-photo-1301856.jpeg?auto=compress&cs=tinysrgb&w=800&q=80",
   "https://images.pexels.com/photos/280222/pexels-photo-280222.jpeg?auto=compress&cs=tinysrgb&w=800&q=80",
   "https://images.pexels.com/photos/5504178/pexels-photo-5504178.jpeg?auto=compress&cs=tinysrgb&w=800&q=80",
   "https://images.pexels.com/photos/259588/pexels-photo-259588.jpeg?auto=compress&cs=tinysrgb&w=800&q=80",
+];
+
+const HERO_IMAGES_MOBILE = [
+  "https://images.pexels.com/photos/7598364/pexels-photo-7598364.jpeg?auto=compress&cs=tinysrgb&w=600&q=70",
+  "https://images.pexels.com/photos/1301856/pexels-photo-1301856.jpeg?auto=compress&cs=tinysrgb&w=600&q=70",
+  "https://images.pexels.com/photos/280222/pexels-photo-280222.jpeg?auto=compress&cs=tinysrgb&w=600&q=70",
 ];
 
 const HERO_THUMB1 =
@@ -215,23 +221,23 @@ function OrganicBlobs() {
 }
 
 /* ---------- Auto-rotating hero image ---------- */
-function HeroImageSlider({ className, imgClassName }: { className?: string; imgClassName?: string }) {
+function HeroImageSlider({ className, imgClassName, images }: { className?: string; imgClassName?: string; images: string[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % HERO_IMAGES.length);
+      setCurrentIndex((prev) => (prev + 1) % images.length);
     }, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [images.length]);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const images = container.querySelectorAll("[data-hero-slide]");
-    images.forEach((img, i) => {
+    const imgs = container.querySelectorAll("[data-hero-slide]");
+    imgs.forEach((img, i) => {
       const el = img as HTMLElement;
       if (i === currentIndex) {
         gsap.to(el, { opacity: 1, scale: 1, duration: 0.8, ease: "power2.out" });
@@ -243,7 +249,7 @@ function HeroImageSlider({ className, imgClassName }: { className?: string; imgC
 
   return (
     <div ref={containerRef} className={className}>
-      {HERO_IMAGES.map((src, i) => (
+      {images.map((src: string, i: number) => (
         <img
           key={i}
           data-hero-slide
@@ -255,7 +261,7 @@ function HeroImageSlider({ className, imgClassName }: { className?: string; imgC
       ))}
       {/* Progress dots */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-        {HERO_IMAGES.map((_, i) => (
+        {images.map((_: string, i: number) => (
           <button
             key={i}
             onClick={() => setCurrentIndex(i)}
@@ -354,6 +360,7 @@ export default function Hero() {
             <HeroImageSlider
               className="relative w-full h-[240px] sm:h-[300px]"
               imgClassName=""
+              images={HERO_IMAGES_MOBILE}
             />
           </div>
 
@@ -373,16 +380,14 @@ export default function Hero() {
             {/* H1 */}
             <h1
               data-hero-title
-              className="text-4xl sm:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-bold leading-[1.06] tracking-tight text-dark mb-7"
+              className="text-3xl sm:text-4xl lg:text-[3rem] xl:text-[3.5rem] font-bold leading-[1.1] tracking-tight text-dark mb-7"
               style={{ perspective: "600px" }}
             >
               <span className="hero-line block overflow-hidden">
                 <span className="block">Twoj ogrod w rekach</span>
               </span>
               <span className="hero-line block overflow-hidden">
-                <span className="block text-gradient">
-                  sprawdzonego wykonawcy
-                </span>
+                <span className="block text-gradient">sprawdzonego wykonawcy</span>
               </span>
             </h1>
 
@@ -449,6 +454,7 @@ export default function Hero() {
                 <HeroImageSlider
                   className="relative w-full h-[540px]"
                   imgClassName=""
+                  images={HERO_IMAGES_DESKTOP}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-dark/30 via-transparent to-transparent rounded-3xl pointer-events-none z-10" />
               </div>

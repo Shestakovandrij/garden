@@ -94,13 +94,14 @@ export default function Cases() {
 
   useEffect(() => {
     const mm = gsap.matchMedia();
-    mm.add("(prefers-reduced-motion: no-preference)", () => {
+
+    // Desktop only — horizontal scroll with pin
+    mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
       const track = trackRef.current;
       const container = containerRef.current;
       if (!track || !container) return;
 
       const ctx = gsap.context(() => {
-        // Calculate how far to scroll horizontally
         const getScrollDistance = () => {
           return track.scrollWidth - container.offsetWidth;
         };
@@ -121,6 +122,7 @@ export default function Cases() {
       }, sectionRef);
       return () => ctx.revert();
     });
+
     return () => mm.revert();
   }, []);
 
@@ -166,7 +168,7 @@ export default function Cases() {
         </div>
 
         {/* Horizontal scroll track */}
-        <div ref={containerRef} className="overflow-hidden">
+        <div ref={containerRef} className="lg:overflow-hidden overflow-x-auto overflow-y-hidden scrollbar-none">
           <div
             ref={trackRef}
             className="flex gap-7 pl-6 lg:pl-[max(2rem,calc((100vw-80rem)/2+2rem))]"

@@ -12,11 +12,24 @@ const NAV_LINKS = [
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [open, setOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 20);
+
+      // Hide on scroll down, show on scroll up (only after 80px)
+      if (y > 80) {
+        setHidden(y > lastScrollY.current && y - lastScrollY.current > 5);
+      } else {
+        setHidden(false);
+      }
+      lastScrollY.current = y;
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -83,7 +96,11 @@ export default function Header() {
   return (
     <>
       <header
-        className={`fixed z-50 transition-all duration-500 top-3 left-4 right-4 rounded-2xl ${
+        className={`fixed z-50 top-3 left-4 right-4 rounded-2xl transition-all duration-400 ${
+          hidden && !open
+            ? "-translate-y-[calc(100%+1rem)] opacity-0"
+            : "translate-y-0 opacity-100"
+        } ${
           scrolled
             ? "bg-white/95 backdrop-blur-md shadow-lg shadow-black/5 border border-border/30"
             : "bg-white/90 backdrop-blur-sm shadow-md shadow-black/3 border border-border/20"
@@ -130,7 +147,7 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Mobile fullscreen overlay — CSS transition for slide, GSAP for inner elements */}
+      {/* Mobile fullscreen overlay */}
       <div
         className={`md:hidden fixed inset-0 z-[100] bg-[#0A1F12] flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.76,0,0.24,1)] ${
           open ? "translate-x-0 pointer-events-auto" : "translate-x-full pointer-events-none"
