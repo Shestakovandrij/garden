@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { useContactPopup } from "./ContactPopup";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -168,6 +169,7 @@ function MobileServiceCard({
 export default function Services() {
   const sectionRef = useRef<HTMLElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const { open: openPopup } = useContactPopup();
   const [activeIndex, setActiveIndex] = useState(0);
   const [mobileOpenIndex, setMobileOpenIndex] = useState<number | null>(0);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
@@ -301,8 +303,8 @@ export default function Services() {
               Od projektu po gotowy ogrod. Wszystko w jednym miejscu, bez
               szukania kolejnych podwykonawcow.
             </p>
-            <a
-              href="#kontakt"
+            <button
+              onClick={openPopup}
               className="inline-flex items-center gap-2 text-primary font-semibold hover:text-emerald transition-colors group cursor-pointer"
             >
               Chcesz wycene?
@@ -310,7 +312,7 @@ export default function Services() {
                 size={16}
                 className="transition-transform duration-200 group-hover:translate-x-1"
               />
-            </a>
+            </button>
           </div>
         </div>
 
@@ -428,13 +430,13 @@ export default function Services() {
                       {active.title}
                     </h4>
                   </div>
-                  <a
-                    href="#kontakt"
+                  <button
+                    onClick={openPopup}
                     className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/15 flex items-center justify-center hover:bg-accent hover:border-accent transition-all duration-300 cursor-pointer flex-shrink-0"
                     aria-label={`Zapytaj o ${active.title}`}
                   >
                     <ArrowUpRight size={20} className="text-white" />
-                  </a>
+                  </button>
                 </div>
               </div>
 

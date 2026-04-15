@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowRight, MapPin, ExternalLink } from "lucide-react";
+import { useContactPopup } from "./ContactPopup";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -90,6 +91,7 @@ const cases = [
 export default function Cases() {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const { open: openPopup } = useContactPopup();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -154,8 +156,8 @@ export default function Cases() {
                 indywidualne podejscie i dbalosc o szczegoly.
               </p>
             </div>
-            <a
-              href="#kontakt"
+            <button
+              onClick={openPopup}
               className="inline-flex items-center gap-2 text-primary font-semibold hover:text-emerald transition-colors whitespace-nowrap group cursor-pointer"
             >
               Chcesz podobny efekt?
@@ -163,7 +165,7 @@ export default function Cases() {
                 size={18}
                 className="transition-transform duration-200 group-hover:translate-x-1"
               />
-            </a>
+            </button>
           </div>
         </div>
 

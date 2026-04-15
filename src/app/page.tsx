@@ -1,3 +1,5 @@
+"use client";
+
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import Services from "@/components/Services";
@@ -9,10 +11,11 @@ import FAQ from "@/components/FAQ";
 import Testimonials from "@/components/Testimonials";
 import Footer from "@/components/Footer";
 import Preloader from "@/components/Preloader";
+import { ContactPopupProvider } from "@/components/ContactPopup";
 
 export default function Home() {
   return (
-    <>
+    <ContactPopupProvider>
       <Preloader />
       <Header />
       <main>
@@ -26,6 +29,6 @@ export default function Home() {
         <Testimonials />
       </main>
       <Footer />
-    </>
+    </ContactPopupProvider>
   );
 }

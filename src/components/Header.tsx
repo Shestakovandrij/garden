@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, ArrowRight } from "lucide-react";
 import gsap from "gsap";
+import { useContactPopup } from "./ContactPopup";
 
 const NAV_LINKS = [
   { href: "#uslugi", label: "Usługi" },
@@ -15,6 +16,7 @@ export default function Header() {
   const [hidden, setHidden] = useState(false);
   const [open, setOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
+  const { open: openPopup } = useContactPopup();
   const lastScrollY = useRef(0);
 
   useEffect(() => {
@@ -127,13 +129,13 @@ export default function Header() {
                   {link.label}
                 </a>
               ))}
-              <a
-                href="#kontakt"
+              <button
+                onClick={openPopup}
                 className="ml-3 inline-flex items-center gap-2 h-10 px-6 bg-gradient-to-r from-primary to-emerald text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
               >
                 Wyślij zapytanie
                 <ArrowRight size={15} />
-              </a>
+              </button>
             </nav>
 
             <button
@@ -193,14 +195,13 @@ export default function Header() {
           ))}
 
           <div data-menu-cta className="mt-10">
-            <a
-              href="#kontakt"
-              onClick={() => setOpen(false)}
+            <button
+              onClick={() => { setOpen(false); openPopup(); }}
               className="inline-flex items-center justify-center gap-3 w-full h-16 bg-gradient-to-r from-primary to-emerald text-white text-lg font-semibold rounded-2xl shadow-lg shadow-primary/30 cursor-pointer hover:shadow-xl hover:shadow-primary/40 transition-all duration-300"
             >
               Wyślij zapytanie
               <ArrowRight size={20} />
-            </a>
+            </button>
           </div>
         </nav>
 

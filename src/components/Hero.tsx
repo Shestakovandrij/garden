@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { ArrowRight, Sparkles, Shield, Clock, TreePine } from "lucide-react";
 import gsap from "gsap";
+import { useContactPopup } from "./ContactPopup";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -278,6 +279,7 @@ function HeroImageSlider({ className, imgClassName, images }: { className?: stri
 
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
+  const { open: openPopup } = useContactPopup();
 
   useEffect(() => {
     const mm = gsap.matchMedia();
@@ -402,9 +404,9 @@ export default function Hero() {
 
             {/* CTA buttons */}
             <div className="flex flex-wrap gap-4 mb-12">
-              <a
+              <button
                 data-hero-cta
-                href="#kontakt"
+                onClick={openPopup}
                 className="group relative inline-flex items-center gap-2.5 h-14 px-9 bg-gradient-to-r from-primary to-emerald text-white font-bold rounded-2xl hover:shadow-2xl hover:shadow-primary/25 transition-all duration-400 hover:-translate-y-1 cursor-pointer"
               >
                 <span className="relative z-10">Wyslij zapytanie</span>
@@ -413,7 +415,7 @@ export default function Hero() {
                   className="relative z-10 transition-transform duration-300 group-hover:translate-x-1"
                 />
                 <div className="absolute inset-0 rounded-2xl bg-white/15 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </a>
+              </button>
               <a
                 data-hero-cta
                 href="#uslugi"

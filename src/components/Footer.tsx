@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import gsap from "gsap";
+import { useContactPopup } from "./ContactPopup";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -16,6 +17,7 @@ const MARQUEE_REPEAT = 8;
 export default function Footer() {
   const ctaRef = useRef<HTMLDivElement>(null);
   const bgRef = useRef<HTMLImageElement>(null);
+  const { open: openPopup } = useContactPopup();
   const marqueeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -82,13 +84,13 @@ export default function Footer() {
               Wypelnij krotki quiz — przygotujemy wycene dopasowana do Twoich
               potrzeb.
             </p>
-            <a
-              href="#kontakt"
+            <button
+              onClick={openPopup}
               className="inline-flex items-center gap-2.5 h-14 px-10 bg-gradient-to-r from-accent to-accent/80 text-white font-semibold rounded-2xl hover:shadow-xl hover:shadow-accent/25 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
             >
               Wyslij zapytanie
               <ArrowRight size={18} />
-            </a>
+            </button>
           </div>
         </div>
       </div>

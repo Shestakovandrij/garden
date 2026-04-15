@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Plus, Minus } from "lucide-react";
+import { useContactPopup } from "./ContactPopup";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -45,7 +46,6 @@ function FAQItem({
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -55,15 +55,11 @@ function FAQItem({
 
   return (
     <div
-      className={`rounded-2xl border transition-all duration-300 ${
+      className={`rounded-2xl border transition-colors duration-200 ${
         isOpen
-          ? "border-primary/20 bg-primary/[0.02] shadow-md shadow-primary/5"
-          : isHovered
-          ? "border-primary/15 bg-primary/[0.01] shadow-sm shadow-primary/3 -translate-y-0.5"
-          : "border-border/50 hover:border-primary/10"
+          ? "border-primary/20 bg-primary/[0.02]"
+          : "border-border/50 hover:border-primary/15 hover:bg-primary/[0.01]"
       }`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <button
         onClick={onToggle}
@@ -72,35 +68,25 @@ function FAQItem({
       >
         <div className="flex items-center gap-4">
           <span
-            className={`text-sm font-bold tabular-nums transition-colors duration-300 ${
-              isOpen
-                ? "text-accent"
-                : isHovered
-                ? "text-accent/70"
-                : "text-text-muted"
+            className={`text-sm font-bold tabular-nums transition-colors duration-200 ${
+              isOpen ? "text-accent" : "text-text-muted group-hover:text-accent/70"
             }`}
           >
             0{index + 1}
           </span>
           <span
-            className={`font-semibold text-[15px] lg:text-base transition-colors duration-300 ${
-              isOpen
-                ? "text-primary"
-                : isHovered
-                ? "text-primary/80"
-                : "text-text"
+            className={`font-semibold text-[15px] lg:text-base transition-colors duration-200 ${
+              isOpen ? "text-primary" : "text-text group-hover:text-primary/80"
             }`}
           >
             {q}
           </span>
         </div>
         <div
-          className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+          className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-200 ${
             isOpen
-              ? "bg-primary text-white rotate-0 scale-100"
-              : isHovered
-              ? "bg-primary/10 text-primary scale-110"
-              : "bg-surface text-text-muted scale-100"
+              ? "bg-primary text-white"
+              : "bg-surface text-text-muted group-hover:bg-primary/10 group-hover:text-primary"
           }`}
         >
           {isOpen ? <Minus size={16} /> : <Plus size={16} />}
@@ -108,7 +94,7 @@ function FAQItem({
       </button>
       <div
         style={{ height }}
-        className="overflow-hidden transition-all duration-300 ease-out"
+        className="overflow-hidden transition-[height] duration-300 ease-out"
       >
         <div
           ref={contentRef}
@@ -124,10 +110,11 @@ function FAQItem({
 export default function FAQ() {
   const sectionRef = useRef<HTMLElement>(null);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const { open: openPopup } = useContactPopup();
 
   useEffect(() => {
     const mm = gsap.matchMedia();
-    mm.add("(prefers-reduced-motion: no-preference)", () => {
+    mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
       const ctx = gsap.context(() => {
         gsap.from("[data-faq-anim]", {
           y: 30,
@@ -152,7 +139,8 @@ export default function FAQ() {
       ref={sectionRef}
       className="py-24 lg:py-32 bg-gradient-to-b from-white to-surface relative"
     >
-      <div className="absolute top-0 right-[10%] w-[400px] h-[400px] bg-accent/3 rounded-full blur-[120px]" />
+      {/* Decorative — hidden on mobile for perf */}
+      <div className="hidden lg:block absolute top-0 right-[10%] w-[400px] h-[400px] bg-accent/3 rounded-full blur-[120px]" />
 
       <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-12 lg:gap-20">
@@ -170,12 +158,12 @@ export default function FAQ() {
             <p className="text-text-secondary text-lg leading-relaxed mb-8">
               Nie znalazles odpowiedzi? Napisz do nas — chetnie pomozemy.
             </p>
-            <a
-              href="#kontakt"
+            <button
+              onClick={openPopup}
               className="inline-flex items-center gap-2 h-12 px-7 bg-gradient-to-r from-primary to-emerald text-white text-sm font-semibold rounded-2xl hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
             >
               Wyslij zapytanie
-            </a>
+            </button>
           </div>
 
           {/* Right — accordion */}
