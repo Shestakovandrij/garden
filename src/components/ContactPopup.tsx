@@ -1,5 +1,6 @@
 "use client";
 
+import { sendToTelegram, formatPopupMessage } from "@/lib/telegram";
 import {
   createContext,
   useContext,
@@ -112,6 +113,7 @@ export function ContactPopupProvider({ children }: { children: React.ReactNode }
     }
 
     if (valid) {
+      sendToTelegram(formatPopupMessage(name, phone));
       setSubmitted(true);
       setTimeout(() => close(), 2500);
     }

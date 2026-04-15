@@ -16,6 +16,7 @@ import {
   User,
   Phone,
 } from "lucide-react";
+import { sendToTelegram, formatQuizMessage } from "@/lib/telegram";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -225,6 +226,7 @@ export default function ContactForm() {
   };
 
   const handleSubmit = () => {
+    sendToTelegram(formatQuizMessage(answers));
     setSubmitted(true);
   };
 
