@@ -40,7 +40,7 @@ export default function Footer() {
           const track = marqueeRef.current;
           gsap.to(track, {
             xPercent: -50,
-            duration: 20,
+            duration: 40,
             ease: "none",
             repeat: -1,
           });
