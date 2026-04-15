@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/* ── Service data — easy to add/remove/reorder ── */
+/* ── Service data ── */
 const services = [
   {
     title: "Perfekcyjne trawniki",
@@ -60,12 +60,100 @@ const services = [
   },
 ];
 
+/* ── Mobile service card with scroll-triggered reveal ── */
+function MobileServiceCard({
+  service,
+  index,
+}: {
+  service: (typeof services)[0];
+  index: number;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    const st = ScrollTrigger.create({
+      trigger: el,
+      start: "top 70%",
+      onEnter: () => setIsOpen(true),
+    });
+
+    return () => st.kill();
+  }, []);
+
+  return (
+    <div ref={cardRef} data-service-item className="border-b border-border/60">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full text-left py-5 flex items-start gap-4 group transition-all duration-300 cursor-pointer ${
+          isOpen ? "opacity-100" : "opacity-60"
+        }`}
+      >
+        <span
+          className={`text-xs font-semibold tabular-nums mt-2 transition-colors duration-300 ${
+            isOpen ? "text-accent" : "text-text-muted"
+          }`}
+        >
+          ({String(index + 1).padStart(2, "0")})
+        </span>
+        <div className="flex-1 min-w-0">
+          <h3
+            className={`text-2xl sm:text-3xl font-bold tracking-tight leading-[1.1] transition-colors duration-300 ${
+              isOpen ? "text-text" : "text-text/60"
+            }`}
+          >
+            {service.title}
+          </h3>
+        </div>
+        <div
+          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 transition-all duration-300 ${
+            isOpen
+              ? "bg-gradient-to-br from-primary to-emerald text-white rotate-0"
+              : "bg-surface text-text-muted -rotate-45"
+          }`}
+        >
+          <ArrowUpRight size={18} />
+        </div>
+      </button>
+
+      {/* Expandable content with image */}
+      <div
+        className={`overflow-hidden transition-all duration-500 ease-out ${
+          isOpen ? "max-h-[500px] opacity-100 pb-6" : "max-h-0 opacity-0 pb-0"
+        }`}
+      >
+        <div className="pl-10">
+          <p className="text-text-secondary text-sm leading-relaxed mb-4 max-w-md">
+            {service.desc}
+          </p>
+          <div className="rounded-2xl overflow-hidden aspect-[16/10] relative">
+            <img
+              src={service.image}
+              alt={service.alt}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-dark/40 via-transparent to-transparent" />
+            <div className="absolute bottom-3 left-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/15 backdrop-blur-sm text-xs font-semibold text-white/90">
+                ({String(index + 1).padStart(2, "0")}) Usluga
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Services() {
   const sectionRef = useRef<HTMLElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [prevIndex, setPrevIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const timelineRef = useRef<gsap.core.Timeline | null>(null);
 
   /* Scroll-triggered entrance */
   useEffect(() => {
@@ -81,18 +169,6 @@ export default function Services() {
             duration: 0.7,
             ease: "power2.out",
             scrollTrigger: { trigger: sectionRef.current, start: "top 80%" },
-          }
-        );
-        gsap.fromTo(
-          "[data-service-item]",
-          { y: 20, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.5,
-            stagger: 0.06,
-            ease: "power2.out",
-            scrollTrigger: { trigger: "[data-service-item]", start: "top 85%" },
           }
         );
         gsap.fromTo(
@@ -115,61 +191,64 @@ export default function Services() {
     return () => mm.revert();
   }, []);
 
-  /* Animate preview image change */
-  const handleServiceChange = (index: number) => {
-    if (index === activeIndex || isAnimating) return;
-    setIsAnimating(true);
-    setPrevIndex(activeIndex);
+  /* Instant image crossfade — no delay */
+  const handleServiceChange = useCallback(
+    (index: number) => {
+      if (index === activeIndex) return;
 
-    const preview = previewRef.current;
-    if (!preview) {
-      setActiveIndex(index);
-      setIsAnimating(false);
-      return;
-    }
+      // Kill any running animation immediately
+      if (timelineRef.current) {
+        timelineRef.current.kill();
+        timelineRef.current = null;
+      }
 
-    const incoming = preview.querySelector("[data-img-incoming]") as HTMLElement;
-    const outgoing = preview.querySelector("[data-img-outgoing]") as HTMLElement;
+      const preview = previewRef.current;
+      if (!preview) {
+        setActiveIndex(index);
+        return;
+      }
 
-    if (incoming && outgoing) {
-      // Set up incoming with new image
-      setActiveIndex(index);
+      const incoming = preview.querySelector(
+        "[data-img-incoming]"
+      ) as HTMLElement;
+      const outgoing = preview.querySelector(
+        "[data-img-outgoing]"
+      ) as HTMLElement;
 
-      gsap.set(incoming, { opacity: 0, scale: 1.05, y: 20 });
-      gsap.set(outgoing, { opacity: 1, scale: 1, y: 0 });
+      if (incoming && outgoing) {
+        // Instantly set outgoing to current state
+        gsap.set(outgoing, { opacity: 1, scale: 1 });
+        // Prep incoming
+        gsap.set(incoming, { opacity: 0, scale: 1.03 });
 
-      const tl = gsap.timeline({
-        onComplete: () => {
-          setPrevIndex(index);
-          setIsAnimating(false);
-        },
-      });
+        setActiveIndex(index);
 
-      tl.to(outgoing, {
-        opacity: 0,
-        scale: 0.95,
-        y: -15,
-        duration: 0.35,
-        ease: "power2.in",
-      }).to(
-        incoming,
-        {
-          opacity: 1,
-          scale: 1,
-          y: 0,
-          duration: 0.45,
-          ease: "power2.out",
-        },
-        "-=0.15"
-      );
-    } else {
-      setActiveIndex(index);
-      setIsAnimating(false);
-    }
-  };
+        const tl = gsap.timeline();
+        timelineRef.current = tl;
+
+        tl.to(outgoing, {
+          opacity: 0,
+          scale: 0.97,
+          duration: 0.3,
+          ease: "power2.in",
+        }).to(
+          incoming,
+          {
+            opacity: 1,
+            scale: 1,
+            duration: 0.35,
+            ease: "power2.out",
+          },
+          "-=0.2"
+        );
+      } else {
+        setActiveIndex(index);
+      }
+    },
+    [activeIndex]
+  );
 
   const active = services[activeIndex];
-  const prev = services[prevIndex];
 
   return (
     <section
@@ -215,8 +294,15 @@ export default function Services() {
           </div>
         </div>
 
-        {/* ── Two-column: list + preview ── */}
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+        {/* ── Mobile: accordion cards with scroll trigger ── */}
+        <div className="lg:hidden">
+          {services.map((service, i) => (
+            <MobileServiceCard key={i} service={service} index={i} />
+          ))}
+        </div>
+
+        {/* ── Desktop: list + preview (no thumbnails) ── */}
+        <div className="hidden lg:flex gap-8 lg:gap-12">
           {/* Left — service list */}
           <div className="lg:w-[55%] xl:w-[50%]">
             <div className="divide-y divide-border/60">
@@ -283,7 +369,7 @@ export default function Services() {
             </div>
           </div>
 
-          {/* Right — preview */}
+          {/* Right — preview (no thumbnail strip) */}
           <div
             className="lg:w-[45%] xl:w-[50%] lg:sticky lg:top-28 lg:self-start"
             data-service-preview
@@ -292,11 +378,11 @@ export default function Services() {
               ref={previewRef}
               className="relative rounded-3xl overflow-hidden aspect-[4/3] lg:aspect-[3/4] xl:aspect-[4/5] bg-surface-alt"
             >
-              {/* Outgoing (previous) image */}
+              {/* Outgoing image */}
               <img
                 data-img-outgoing
-                src={prev.image}
-                alt={prev.alt}
+                src={active.image}
+                alt={active.alt}
                 className="absolute inset-0 w-full h-full object-cover"
               />
 
@@ -334,29 +420,6 @@ export default function Services() {
 
               {/* Accent top line */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent via-accent/50 to-transparent" />
-            </div>
-
-            {/* Thumbnail strip */}
-            <div className="flex gap-2 mt-4 overflow-x-auto pb-1 scrollbar-none">
-              {services.map((s, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleServiceChange(i)}
-                  className={`relative flex-shrink-0 w-16 h-16 lg:w-20 lg:h-20 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer ${
-                    i === activeIndex
-                      ? "ring-2 ring-accent ring-offset-2 ring-offset-white opacity-100"
-                      : "opacity-40 hover:opacity-70"
-                  }`}
-                  aria-label={s.title}
-                >
-                  <img
-                    src={s.image}
-                    alt={s.alt}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </button>
-              ))}
             </div>
           </div>
         </div>

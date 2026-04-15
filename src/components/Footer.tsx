@@ -10,9 +10,13 @@ gsap.registerPlugin(ScrollTrigger);
 const CTA_BG =
   "https://images.pexels.com/photos/259588/pexels-photo-259588.jpeg?auto=compress&cs=tinysrgb&w=1920&q=80";
 
+const MARQUEE_TEXT = "GRUNDGARDEN";
+const MARQUEE_REPEAT = 8;
+
 export default function Footer() {
   const ctaRef = useRef<HTMLDivElement>(null);
   const bgRef = useRef<HTMLImageElement>(null);
+  const marqueeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const mm = gsap.matchMedia();
@@ -28,6 +32,17 @@ export default function Footer() {
               end: "bottom top",
               scrub: 0.3,
             },
+          });
+        }
+
+        // Marquee animation
+        if (marqueeRef.current) {
+          const track = marqueeRef.current;
+          gsap.to(track, {
+            xPercent: -50,
+            duration: 20,
+            ease: "none",
+            repeat: -1,
           });
         }
       }, ctaRef);
@@ -74,6 +89,39 @@ export default function Footer() {
               Wyslij zapytanie
               <ArrowRight size={18} />
             </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Marquee */}
+      <div className="bg-dark overflow-hidden border-b border-white/5">
+        <div className="py-6 lg:py-8">
+          <div
+            ref={marqueeRef}
+            className="flex whitespace-nowrap"
+            style={{ width: "max-content" }}
+          >
+            {Array.from({ length: MARQUEE_REPEAT * 2 }).map((_, i) => (
+              <span
+                key={i}
+                className="text-[5rem] sm:text-[7rem] lg:text-[9rem] font-bold tracking-tighter leading-none mx-6 lg:mx-10 select-none"
+                style={{
+                  WebkitTextStroke: "1.5px rgba(255,255,255,0.15)",
+                  color: "transparent",
+                }}
+              >
+                {MARQUEE_TEXT}
+                <span
+                  className="inline-block mx-6 lg:mx-10 text-accent/20"
+                  style={{
+                    WebkitTextStroke: "0",
+                    color: "rgba(182, 141, 64, 0.2)",
+                  }}
+                >
+                  ✦
+                </span>
+              </span>
+            ))}
           </div>
         </div>
       </div>

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Star, Quote, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, Quote } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -32,53 +32,170 @@ const testimonials = [
     initials: "PN",
     service: "Kompleksowy ogrod",
   },
+  {
+    quote:
+      "Zamowilismy ogrodzenie i nawadnianie. Realizacja w terminie, ekipa rzetelna, efekt koncowy — wyzej niz oczekiwania. Na pewno wrociny!",
+    name: "Katarzyna Zielinska",
+    location: "Poznan",
+    initials: "KZ",
+    service: "Ogrodzenie + nawadnianie",
+  },
+  {
+    quote:
+      "Od lat szukalem firmy, ktora zrobi trawnik z prawdziwego zdarzenia. GRUNDGARDEN to wreszcie to — perfekcyjny efekt i uczciwa cena.",
+    name: "Tomasz Lewandowski",
+    location: "Gdansk",
+    initials: "TL",
+    service: "Trawnik z rolki",
+  },
 ];
+
+function TestimonialCard({
+  t,
+  isActive,
+}: {
+  t: (typeof testimonials)[0];
+  isActive: boolean;
+}) {
+  return (
+    <div
+      className={`relative p-7 lg:p-8 rounded-3xl bg-white border transition-all duration-500 ${
+        isActive
+          ? "border-accent/20 shadow-2xl shadow-primary/10 scale-100"
+          : "border-border/30 shadow-lg shadow-primary/3 scale-[0.92] opacity-50"
+      }`}
+    >
+      {/* Large quote mark */}
+      <div className="absolute -top-3 -left-1 text-accent/10 pointer-events-none">
+        <Quote size={64} strokeWidth={1} />
+      </div>
+
+      {/* Service tag */}
+      <div className="mb-5">
+        <span className="inline-flex px-3 py-1 rounded-lg bg-accent/8 text-xs font-semibold text-accent">
+          {t.service}
+        </span>
+      </div>
+
+      {/* Stars */}
+      <div className="flex gap-1 mb-5">
+        {[1, 2, 3, 4, 5].map((s) => (
+          <Star key={s} size={16} className="fill-accent text-accent" />
+        ))}
+      </div>
+
+      {/* Quote text */}
+      <p className="text-text leading-relaxed mb-7 text-[15px] font-medium relative z-10">
+        &ldquo;{t.quote}&rdquo;
+      </p>
+
+      {/* Author */}
+      <div className="flex items-center gap-3.5 pt-6 border-t border-border/40">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-emerald flex items-center justify-center shadow-md shadow-primary/15">
+          <span className="text-white text-sm font-bold">{t.initials}</span>
+        </div>
+        <div>
+          <p className="text-sm font-bold text-text">{t.name}</p>
+          <p className="text-xs text-text-muted flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
+            {t.location}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Testimonials() {
   const sectionRef = useRef<HTMLElement>(null);
+  const sliderRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [revealed, setRevealed] = useState(false);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const autoPlayRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
+  const goTo = useCallback(
+    (index: number) => {
+      const clamped = Math.max(0, Math.min(index, testimonials.length - 1));
+      setActiveIndex(clamped);
+
+      if (!sliderRef.current) return;
+      const cards = sliderRef.current.querySelectorAll("[data-tcard]");
+      if (!cards.length) return;
+
+      // Animate the track position
+      const cardWidth = (cards[0] as HTMLElement).offsetWidth;
+      const gap = 28;
+      const containerWidth = sliderRef.current.parentElement?.offsetWidth || 0;
+      const offset =
+        containerWidth / 2 - cardWidth / 2 - clamped * (cardWidth + gap);
+
+      gsap.to(sliderRef.current, {
+        x: offset,
+        duration: 0.8,
+        ease: "power3.out",
+      });
+
+      // Animate cards scale/opacity
+      cards.forEach((card, i) => {
+        const el = card as HTMLElement;
+        const distance = Math.abs(i - clamped);
+        gsap.to(el, {
+          scale: distance === 0 ? 1 : 0.92 - distance * 0.03,
+          opacity: distance === 0 ? 1 : Math.max(0.3, 0.5 - distance * 0.1),
+          duration: 0.6,
+          ease: "power2.out",
+        });
+      });
+    },
+    []
+  );
+
+  // Auto-play
   useEffect(() => {
-    setRevealed(true);
-
-    const mm = gsap.matchMedia();
-    mm.add("(prefers-reduced-motion: no-preference)", () => {
-      const ctx = gsap.context(() => {
-        gsap.fromTo(
-          "[data-testimonial-header]",
-          { y: 30, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.7,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              start: "top 80%",
-            },
-          }
-        );
-        gsap.fromTo(
-          "[data-testimonial]",
-          { y: 40, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.8,
-            stagger: 0.15,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: "[data-testimonial]",
-              start: "top 85%",
-            },
-          }
-        );
-      }, sectionRef);
-      return () => ctx.revert();
-    });
-    return () => mm.revert();
+    autoPlayRef.current = setInterval(() => {
+      setActiveIndex((prev) => {
+        const next = (prev + 1) % testimonials.length;
+        return next;
+      });
+    }, 4000);
+    return () => clearInterval(autoPlayRef.current);
   }, []);
+
+  // Trigger goTo when activeIndex changes
+  useEffect(() => {
+    goTo(activeIndex);
+  }, [activeIndex, goTo]);
+
+  // Initialize position
+  useEffect(() => {
+    const timer = setTimeout(() => goTo(0), 100);
+    return () => clearTimeout(timer);
+  }, [goTo]);
+
+  // Drag/swipe support
+  const handlePointerDown = (e: React.PointerEvent) => {
+    isDragging.current = true;
+    startX.current = e.clientX;
+    clearInterval(autoPlayRef.current);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    const diff = e.clientX - startX.current;
+    if (Math.abs(diff) > 50) {
+      if (diff < 0 && activeIndex < testimonials.length - 1) {
+        setActiveIndex(activeIndex + 1);
+      } else if (diff > 0 && activeIndex > 0) {
+        setActiveIndex(activeIndex - 1);
+      }
+    }
+    // Restart autoplay
+    autoPlayRef.current = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % testimonials.length);
+    }, 4000);
+  };
 
   return (
     <section
@@ -95,7 +212,7 @@ export default function Testimonials() {
 
       <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
         {/* Header */}
-        <div data-testimonial-header className="text-center mb-16">
+        <div className="text-center mb-16">
           <span className="inline-flex items-center gap-2 text-sm font-semibold text-accent mb-4">
             <span className="w-10 h-px bg-accent" />
             Opinie klientow
@@ -110,149 +227,75 @@ export default function Testimonials() {
           </p>
         </div>
 
-        {/* Desktop: cards grid */}
-        <div className="hidden md:grid grid-cols-3 gap-7 max-w-5xl mx-auto">
-          {testimonials.map((t, i) => (
-            <div
+        {/* GSAP slider */}
+        <div
+          className="relative overflow-hidden cursor-grab active:cursor-grabbing"
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+          style={{ touchAction: "pan-y" }}
+        >
+          <div
+            ref={sliderRef}
+            className="flex gap-7"
+            style={{ willChange: "transform" }}
+          >
+            {testimonials.map((t, i) => (
+              <div
+                key={i}
+                data-tcard
+                className="flex-shrink-0 w-[85vw] sm:w-[70vw] md:w-[50vw] lg:w-[400px]"
+                onClick={() => setActiveIndex(i)}
+              >
+                <TestimonialCard t={t} isActive={i === activeIndex} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Navigation dots + progress */}
+        <div className="flex items-center justify-center gap-3 mt-10">
+          {testimonials.map((_, i) => (
+            <button
               key={i}
-              data-testimonial
-              className="relative p-7 lg:p-8 rounded-3xl bg-white border border-border/30 shadow-lg shadow-primary/3 hover:shadow-2xl hover:shadow-primary/8 transition-all duration-500 hover:-translate-y-2 group"
-              style={!revealed ? { opacity: 1 } : undefined}
+              onClick={() => {
+                setActiveIndex(i);
+                clearInterval(autoPlayRef.current);
+                autoPlayRef.current = setInterval(() => {
+                  setActiveIndex((prev) => (prev + 1) % testimonials.length);
+                }, 4000);
+              }}
+              className={`relative h-2 rounded-full transition-all duration-500 cursor-pointer overflow-hidden ${
+                i === activeIndex
+                  ? "w-10 bg-primary/20"
+                  : "w-2 bg-border hover:bg-primary/20"
+              }`}
+              aria-label={`Opinia ${i + 1}`}
             >
-              {/* Large quote mark */}
-              <div className="absolute -top-3 -left-1 text-accent/10 pointer-events-none">
-                <Quote size={64} strokeWidth={1} />
-              </div>
-
-              {/* Service tag */}
-              <div className="mb-5">
-                <span className="inline-flex px-3 py-1 rounded-lg bg-accent/8 text-xs font-semibold text-accent">
-                  {t.service}
-                </span>
-              </div>
-
-              {/* Stars */}
-              <div className="flex gap-1 mb-5">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star
-                    key={s}
-                    size={16}
-                    className="fill-accent text-accent"
-                  />
-                ))}
-              </div>
-
-              {/* Quote text */}
-              <p className="text-text leading-relaxed mb-7 text-[15px] font-medium relative z-10">
-                &ldquo;{t.quote}&rdquo;
-              </p>
-
-              {/* Author */}
-              <div className="flex items-center gap-3.5 pt-6 border-t border-border/40">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-emerald flex items-center justify-center shadow-md shadow-primary/15">
-                  <span className="text-white text-sm font-bold">
-                    {t.initials}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-text">{t.name}</p>
-                  <p className="text-xs text-text-muted flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
-                    {t.location}
-                  </p>
-                </div>
-              </div>
-
-              {/* Hover corner glow */}
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-accent/6 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            </div>
+              {i === activeIndex && (
+                <span
+                  className="absolute inset-0 rounded-full bg-gradient-to-r from-primary to-accent"
+                  style={{
+                    animation: "fillDot 4s linear infinite",
+                  }}
+                />
+              )}
+            </button>
           ))}
         </div>
 
-        {/* Mobile: carousel */}
-        <div className="md:hidden">
-          <div
-            data-testimonial
-            className="relative p-7 rounded-3xl bg-white border border-border/30 shadow-lg shadow-primary/3"
-            style={!revealed ? { opacity: 1 } : undefined}
-          >
-            {/* Service tag */}
-            <div className="mb-5">
-              <span className="inline-flex px-3 py-1 rounded-lg bg-accent/8 text-xs font-semibold text-accent">
-                {testimonials[activeIndex].service}
-              </span>
-            </div>
-
-            {/* Stars */}
-            <div className="flex gap-1 mb-5">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <Star key={s} size={16} className="fill-accent text-accent" />
-              ))}
-            </div>
-
-            {/* Quote */}
-            <p className="text-text leading-relaxed mb-7 text-[15px] font-medium">
-              &ldquo;{testimonials[activeIndex].quote}&rdquo;
-            </p>
-
-            {/* Author */}
-            <div className="flex items-center gap-3.5 pt-6 border-t border-border/40">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-emerald flex items-center justify-center">
-                <span className="text-white text-sm font-bold">
-                  {testimonials[activeIndex].initials}
-                </span>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-text">
-                  {testimonials[activeIndex].name}
-                </p>
-                <p className="text-xs text-text-muted">
-                  {testimonials[activeIndex].location}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <div className="flex items-center justify-center gap-4 mt-6">
-            <button
-              onClick={() =>
-                setActiveIndex(
-                  (activeIndex - 1 + testimonials.length) % testimonials.length
-                )
-              }
-              className="w-10 h-10 rounded-xl bg-white border border-border/50 flex items-center justify-center hover:bg-surface transition-colors cursor-pointer"
-              aria-label="Poprzednia opinia"
-            >
-              <ChevronLeft size={18} className="text-text-muted" />
-            </button>
-
-            <div className="flex gap-2">
-              {testimonials.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveIndex(i)}
-                  className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                    i === activeIndex
-                      ? "w-8 bg-gradient-to-r from-primary to-accent"
-                      : "w-2 bg-border"
-                  }`}
-                  aria-label={`Opinia ${i + 1}`}
-                />
-              ))}
-            </div>
-
-            <button
-              onClick={() =>
-                setActiveIndex((activeIndex + 1) % testimonials.length)
-              }
-              className="w-10 h-10 rounded-xl bg-white border border-border/50 flex items-center justify-center hover:bg-surface transition-colors cursor-pointer"
-              aria-label="Nastepna opinia"
-            >
-              <ChevronRight size={18} className="text-text-muted" />
-            </button>
-          </div>
-        </div>
+        <style jsx>{`
+          @keyframes fillDot {
+            from {
+              transform: scaleX(0);
+              transform-origin: left;
+            }
+            to {
+              transform: scaleX(1);
+              transform-origin: left;
+            }
+          }
+        `}</style>
       </div>
     </section>
   );

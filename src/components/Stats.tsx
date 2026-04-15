@@ -10,10 +10,10 @@ const STATS_BG =
   "https://images.pexels.com/photos/5504178/pexels-photo-5504178.jpeg?auto=compress&cs=tinysrgb&w=1920&q=80";
 
 const stats = [
-  { value: "150+", label: "Zrealizowanych projektow" },
-  { value: "8", label: "Lat doswiadczenia" },
-  { value: "25 000", label: "m\u00B2 zalozonych trawnikow" },
-  { value: "100%", label: "Zadowolonych klientow" },
+  { value: 150, suffix: "+", label: "Zrealizowanych projektow" },
+  { value: 8, suffix: "", label: "Lat doswiadczenia" },
+  { value: 25000, suffix: "", label: "m² zalozonych trawnikow", format: true },
+  { value: 100, suffix: "%", label: "Zadowolonych klientow" },
 ];
 
 function AnimatedStat({
@@ -23,8 +23,9 @@ function AnimatedStat({
   stat: (typeof stats)[0];
   index: number;
 }) {
-  const [visible, setVisible] = useState(false);
+  const [displayValue, setDisplayValue] = useState("0");
   const ref = useRef<HTMLDivElement>(null);
+  const hasAnimated = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -32,16 +33,32 @@ function AnimatedStat({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
+        if (entry.isIntersecting && !hasAnimated.current) {
+          hasAnimated.current = true;
           observer.disconnect();
+
+          const counter = { val: 0 };
+          gsap.to(counter, {
+            val: stat.value,
+            duration: 2,
+            delay: index * 0.15,
+            ease: "power2.out",
+            onUpdate: () => {
+              const rounded = Math.round(counter.val);
+              if (stat.format) {
+                setDisplayValue(rounded.toLocaleString("pl-PL"));
+              } else {
+                setDisplayValue(String(rounded));
+              }
+            },
+          });
         }
       },
       { threshold: 0.5 }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [stat.value, stat.format, index]);
 
   return (
     <div
@@ -49,17 +66,11 @@ function AnimatedStat({
       data-stat
       className="text-center p-8 rounded-3xl glass-dark group hover:bg-white/10 transition-all duration-500 cursor-default"
     >
-      <div
-        className={`text-4xl lg:text-5xl font-bold text-white mb-3 transition-all duration-700 ${
-          visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-        }`}
-        style={{ transitionDelay: `${index * 100}ms` }}
-      >
-        {stat.value}
+      <div className="text-4xl lg:text-5xl font-bold text-white mb-3">
+        {displayValue}
+        {stat.suffix}
       </div>
-      <div className="text-sm text-white/80 font-medium">
-        {stat.label}
-      </div>
+      <div className="text-sm text-white/80 font-medium">{stat.label}</div>
     </div>
   );
 }
@@ -72,7 +83,6 @@ export default function Stats() {
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       const ctx = gsap.context(() => {
-        // Parallax background image
         if (bgRef.current) {
           gsap.to(bgRef.current, {
             y: 80,

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ChevronDown, Plus, Minus } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -45,6 +45,7 @@ function FAQItem({
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -56,26 +57,38 @@ function FAQItem({
     <div
       className={`rounded-2xl border transition-all duration-300 ${
         isOpen
-          ? "border-primary/20 bg-primary/[0.02] shadow-sm"
+          ? "border-primary/20 bg-primary/[0.02] shadow-md shadow-primary/5"
+          : isHovered
+          ? "border-primary/15 bg-primary/[0.01] shadow-sm shadow-primary/3 -translate-y-0.5"
           : "border-border/50 hover:border-primary/10"
       }`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-5 lg:p-6 text-left gap-4 cursor-pointer"
+        className="w-full flex items-center justify-between p-5 lg:p-6 text-left gap-4 cursor-pointer group"
         aria-expanded={isOpen}
       >
         <div className="flex items-center gap-4">
           <span
-            className={`text-sm font-bold tabular-nums transition-colors duration-200 ${
-              isOpen ? "text-accent" : "text-text-muted"
+            className={`text-sm font-bold tabular-nums transition-colors duration-300 ${
+              isOpen
+                ? "text-accent"
+                : isHovered
+                ? "text-accent/70"
+                : "text-text-muted"
             }`}
           >
             0{index + 1}
           </span>
           <span
-            className={`font-semibold text-[15px] lg:text-base transition-colors duration-200 ${
-              isOpen ? "text-primary" : "text-text"
+            className={`font-semibold text-[15px] lg:text-base transition-colors duration-300 ${
+              isOpen
+                ? "text-primary"
+                : isHovered
+                ? "text-primary/80"
+                : "text-text"
             }`}
           >
             {q}
@@ -84,8 +97,10 @@ function FAQItem({
         <div
           className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
             isOpen
-              ? "bg-primary text-white rotate-0"
-              : "bg-surface text-text-muted rotate-0"
+              ? "bg-primary text-white rotate-0 scale-100"
+              : isHovered
+              ? "bg-primary/10 text-primary scale-110"
+              : "bg-surface text-text-muted scale-100"
           }`}
         >
           {isOpen ? <Minus size={16} /> : <Plus size={16} />}
@@ -95,7 +110,10 @@ function FAQItem({
         style={{ height }}
         className="overflow-hidden transition-all duration-300 ease-out"
       >
-        <div ref={contentRef} className="px-5 lg:px-6 pb-5 lg:pb-6 pl-14 lg:pl-16">
+        <div
+          ref={contentRef}
+          className="px-5 lg:px-6 pb-5 lg:pb-6 pl-14 lg:pl-16"
+        >
           <p className="text-text-secondary text-sm leading-relaxed">{a}</p>
         </div>
       </div>

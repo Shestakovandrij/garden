@@ -1,20 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { ArrowRight, Sparkles, Shield, Clock, TreePine } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
+const HERO_IMAGES = [
+  "https://images.pexels.com/photos/7598364/pexels-photo-7598364.jpeg?auto=compress&cs=tinysrgb&w=800&q=80",
+  "https://images.pexels.com/photos/1301856/pexels-photo-1301856.jpeg?auto=compress&cs=tinysrgb&w=800&q=80",
+  "https://images.pexels.com/photos/280222/pexels-photo-280222.jpeg?auto=compress&cs=tinysrgb&w=800&q=80",
+  "https://images.pexels.com/photos/5504178/pexels-photo-5504178.jpeg?auto=compress&cs=tinysrgb&w=800&q=80",
+  "https://images.pexels.com/photos/259588/pexels-photo-259588.jpeg?auto=compress&cs=tinysrgb&w=800&q=80",
+];
+
 const HERO_THUMB1 =
   "https://images.pexels.com/photos/1301856/pexels-photo-1301856.jpeg?auto=compress&cs=tinysrgb&w=400&q=80";
 
 const HERO_THUMB2 =
   "https://images.pexels.com/photos/280222/pexels-photo-280222.jpeg?auto=compress&cs=tinysrgb&w=400&q=80";
-
-const HERO_SIDE =
-  "https://images.pexels.com/photos/7598364/pexels-photo-7598364.jpeg?auto=compress&cs=tinysrgb&w=800&q=80";
 
 /* ---------- Interactive organic blob canvas ---------- */
 function OrganicBlobs() {
@@ -209,6 +214,62 @@ function OrganicBlobs() {
   );
 }
 
+/* ---------- Auto-rotating hero image ---------- */
+function HeroImageSlider({ className, imgClassName }: { className?: string; imgClassName?: string }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % HERO_IMAGES.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const images = container.querySelectorAll("[data-hero-slide]");
+    images.forEach((img, i) => {
+      const el = img as HTMLElement;
+      if (i === currentIndex) {
+        gsap.to(el, { opacity: 1, scale: 1, duration: 0.8, ease: "power2.out" });
+      } else {
+        gsap.to(el, { opacity: 0, scale: 1.05, duration: 0.8, ease: "power2.out" });
+      }
+    });
+  }, [currentIndex]);
+
+  return (
+    <div ref={containerRef} className={className}>
+      {HERO_IMAGES.map((src, i) => (
+        <img
+          key={i}
+          data-hero-slide
+          src={src}
+          alt="Nowoczesny dom z zadbanym ogrodem i trawnikiem"
+          className={`absolute inset-0 w-full h-full object-cover transition-none ${imgClassName || ""}`}
+          style={{ opacity: i === 0 ? 1 : 0 }}
+        />
+      ))}
+      {/* Progress dots */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+        {HERO_IMAGES.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrentIndex(i)}
+            className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
+              i === currentIndex ? "w-6 bg-white" : "w-1.5 bg-white/40"
+            }`}
+            aria-label={`Zdjecie ${i + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -288,12 +349,11 @@ export default function Hero() {
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-24 pb-16 lg:py-0 w-full">
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-16 items-center lg:min-h-screen lg:py-28">
 
-          {/* Mobile hero image — on top */}
+          {/* Mobile hero image — on top, auto-rotating */}
           <div className="lg:hidden w-full rounded-2xl overflow-hidden shadow-xl shadow-primary/10 border border-border/30">
-            <img
-              src={HERO_SIDE}
-              alt="Nowoczesny dom z zadbanym ogrodem i trawnikiem"
-              className="w-full h-[240px] sm:h-[300px] object-cover"
+            <HeroImageSlider
+              className="relative w-full h-[240px] sm:h-[300px]"
+              imgClassName=""
             />
           </div>
 
@@ -381,23 +441,22 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Desktop — visual composition */}
+          {/* Desktop — visual composition with auto-rotating image */}
           <div className="hidden lg:block" data-hero-visual>
             <div className="relative">
-              {/* Main hero image */}
+              {/* Main hero image — auto-rotating */}
               <div className="rounded-3xl overflow-hidden shadow-2xl shadow-primary/15 border border-white/50">
-                <img
-                  src={HERO_SIDE}
-                  alt="Nowoczesny dom z zadbanym ogrodem i trawnikiem"
-                  className="w-full h-[540px] object-cover"
+                <HeroImageSlider
+                  className="relative w-full h-[540px]"
+                  imgClassName=""
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-dark/30 via-transparent to-transparent rounded-3xl" />
+                <div className="absolute inset-0 bg-gradient-to-t from-dark/30 via-transparent to-transparent rounded-3xl pointer-events-none z-10" />
               </div>
 
               {/* Floating glass card — top right */}
               <div
                 data-hero-float
-                className="absolute -top-5 -right-5 bg-white/80 backdrop-blur-xl border border-white/60 rounded-2xl p-4 shadow-xl shadow-primary/10 animate-float"
+                className="absolute -top-5 -right-5 bg-white/80 backdrop-blur-xl border border-white/60 rounded-2xl p-4 shadow-xl shadow-primary/10 animate-float z-20"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-accent to-yellow-500 flex items-center justify-center shadow-md shadow-accent/25">
@@ -413,7 +472,7 @@ export default function Hero() {
               {/* Floating gallery — bottom left */}
               <div
                 data-hero-float
-                className="absolute -bottom-6 -left-6 bg-white/80 backdrop-blur-xl border border-white/60 rounded-2xl p-3.5 shadow-xl shadow-primary/10"
+                className="absolute -bottom-6 -left-6 bg-white/80 backdrop-blur-xl border border-white/60 rounded-2xl p-3.5 shadow-xl shadow-primary/10 z-20"
               >
                 <div className="flex items-center gap-3">
                   <div className="flex -space-x-2.5">
@@ -441,7 +500,7 @@ export default function Hero() {
               {/* Stats badge — mid right */}
               <div
                 data-hero-float
-                className="absolute top-1/2 -right-10 -translate-y-1/2 bg-white/80 backdrop-blur-xl border border-white/60 rounded-2xl px-5 py-3 shadow-xl shadow-primary/10"
+                className="absolute top-1/2 -right-10 -translate-y-1/2 bg-white/80 backdrop-blur-xl border border-white/60 rounded-2xl px-5 py-3 shadow-xl shadow-primary/10 z-20"
               >
                 <p className="text-2xl font-bold text-primary">100%</p>
                 <p className="text-xs text-text-muted">Zadowolonych</p>
