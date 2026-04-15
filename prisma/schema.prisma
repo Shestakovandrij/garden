@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth ───────────────────────────────────────────
+model AdminUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("admin_users")
+}
+
+// ─── Content: Pages ─────────────────────────────────
+model Page {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  status    String   @default("draft")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  seo      PageSeo?
+  sections Section[]
+
+  @@map("pages")
+}
+
+model PageSeo {
+  id              String  @id @default(cuid())
+  pageId          String  @unique
+  title           String? @default("")
+  metaDescription String? @default("")
+  ogImage         String? @default("")
+  noIndex         Boolean @default(false)
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@map("page_seo")
+}
+
+// ─── Content: Sections ──────────────────────────────
+model Section {
+  id            String   @id @default(cuid())
+  pageId        String
+  type          String
+  schemaKey     String
+  schemaVersion Int      @default(1)
+  label         String   @default("")
+  sortOrder     Int      @default(0)
+  visible       Boolean  @default(true)
+  data          Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@map("sections")
+}
+
+// ─── Media ──────────────────────────────────────────
+model Media {
+  id        String   @id @default(cuid())
+  url       String
+  filename  String
+  alt       String   @default("")
+  mimeType  String   @default("")
+  size      Int      @default(0)
+  folder    String   @default("general")
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@map("media")
+}
+
+// ─── Forms ──────────────────────────────────────────
+model Form {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  fields      Json     @default("[]")
+  redirectUrl String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  leads Lead[]
+
+  @@map("forms")
+}
+
+// ─── Leads ──────────────────────────────────────────
+model Lead {
+  id        String   @id @default(cuid())
+  formId    String
+  values    Json     @default("{}")
+  status    String   @default("new")
+  source    String   @default("website")
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@map("leads")
+}
+
+// ─── Global Settings ────────────────────────────────
+model GlobalSettings {
+  id    String @id @default(cuid())
+  key   String @unique
+  value Json   @default("{}")
+
+  @@map("global_settings")
+}
